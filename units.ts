@@ -277,4 +277,9 @@ export const units = makeUnits({
     // "RAD": { "s": 1e-2, "d": [0, 2, -2, 0, 0, 0, 0, 0] },
     // "rem": { "s": 1e-2, "d": [0, 2, -2, 0, 0, 0, 0, 0] },
     // "Ci": { "s": 3.7e+10, "d": [0, 0, -1, 0, 0, 0, 0, 0] },
+
+    // Misc.
+
+    // pphpd: "passengers per hour per direction"
+    pphpd: { s: 1/3600, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, -1, 1], ["direction", "pax"]) },
 } as const);
