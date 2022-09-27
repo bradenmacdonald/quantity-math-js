@@ -1,7 +1,8 @@
 import { Dimensions } from "./dimensions.ts";
+import { QuantityError } from "./error.ts";
 
 /** SI prefixes */
-export const prefixes = {
+export const prefixes = Object.freeze({
     y: 1e-24,
     z: 1e-21,
     a: 1e-18,
@@ -30,14 +31,16 @@ export const prefixes = {
     Ei: 1.152921504606847e+18,
     Zi: 1.1805916207174113e+21,
     Yi: 1.2089258196146292e+24,
-};
+});
+
+type Prefix = keyof typeof prefixes;
 
 interface Unit {
     /** Scale */
-    s: number;
+    readonly s: number;
     /** Dimensions */
-    d: Dimensions;
-    offset?: number;
+    readonly d: Dimensions;
+    readonly offset?: number;
 }
 
 // A little helper that makes all the units available to TypeScript, validates
@@ -45,7 +48,7 @@ interface Unit {
 const makeUnits = <UD extends Record<string, Unit>>(ud: UD) =>
     Object.freeze(ud);
 
-export const units = makeUnits(
+export const builtInUnits = makeUnits(
     {
         // Dimensionless:
 
@@ -81,7 +84,11 @@ export const units = makeUnits(
 
         // "denier": { "s": 1.1111111111111112e-7, "d": [1, -1, 0, 0, 0, 0, 0, 0] },
         // "tex": { "s": 1e-6, "d": [1, -1, 0, 0, 0, 0, 0, 0] },
-        // "m": { "s": 1e+0, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
+
+        // Distance:
+
+        /** Meter */
+        "m": { s: 1e+0, d: new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]) },
         // "ang": { "s": 1e-10, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
         // "picapt": { "s": 3.52777777777778e-4, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
         // "pica": { "s": 4.23333333333333e-3, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
@@ -108,7 +115,11 @@ export const units = makeUnits(
         // "fermi": { "s": 1e-15, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
         // "datamile": { "s": 1.8288e+3, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
         // "kayser": { "s": 1e+2, "d": [0, -1, 0, 0, 0, 0, 0, 0] },
-        // "s": { "s": 1e+0, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
+
+        // Time
+
+        /** Seconds */
+        "s": { s: 1e+0, d: new Dimensions([0, 0, 1, 0, 0, 0, 0, 0]) },
         // "sec": { "s": 1e+0, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
         // "min": { "s": 6e+1, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
         // "hr": { "s": 3.6e+3, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
@@ -292,3 +303,90 @@ export const units = makeUnits(
         },
     } as const,
 );
+
+export interface ParsedUnit {
+    prefix?: Prefix;
+    unit: Unit;
+    power: number;
+}
+
+/**
+ * Parse a single unit string, e.g. "km^2" -> {prefix: "k", unit: "m", power: 2}
+ *
+ * This cannot parse compound units like "kg⋅m/s" or "m/s".
+ * @param unitStr
+ */
+function parseSingleUnit(
+    unitStr: string,
+    additionalUnits?: Readonly<Record<string, Unit>>,
+): ParsedUnit {
+    const units: Record<string, Unit> = additionalUnits
+        ? { ...builtInUnits, ...additionalUnits }
+        : builtInUnits;
+
+    const caretPos = unitStr.indexOf("^");
+    // prefixedUnit: The unit possibly with a prefix, e.g. "km", "m", or "Kibit"
+    const prefixedUnit = caretPos === -1
+        ? unitStr
+        : unitStr.substring(0, caretPos);
+    const power = caretPos === -1
+        ? 1
+        : parseInt(unitStr.substring(caretPos + 1, 10));
+
+    if (!power || unitStr.indexOf(".") !== -1) { // If power is 0 or NaN or a float:
+        throw new QuantityError(`Invalid exponent/power on unit "${unitStr}"`);
+    }
+
+    if (prefixedUnit in units) {
+        // Easiest case: unit exists and is ready to use
+        return { unit: units[prefixedUnit], power };
+    } else {
+        // Try some prefixes:
+        const firstLetter = prefixedUnit.substring(0, 1);
+        let rest = prefixedUnit.substring(1);
+        if (firstLetter in prefixes && rest in units) {
+            // prefixedUnit is a length 1 prefix and unit combined.
+            return { prefix: firstLetter as Prefix, unit: units[rest], power };
+        } else {
+            const firstTwo = prefixedUnit.substring(0, 2);
+            rest = prefixedUnit.substring(2);
+            if (firstTwo in prefixes && rest in units) {
+                // prefixedUnit is a length 2 prefix and unit combined.
+                return { prefix: firstTwo as Prefix, unit: units[rest], power };
+            }
+        }
+    }
+    throw new QuantityError(`Unable to parse the unit "${unitStr}"`);
+}
+
+const UNIT_SEPARATOR = /\s+|⋅|\*/g;
+
+/**
+ * Parse a unit string, e.g. "km^2" or "kg⋅m/s^2" or "kg m / s^2"
+ */
+export function parseUnit(
+    unitStr: string,
+    additionalUnits?: Readonly<Record<string, Unit>>,
+): ParsedUnit[] {
+    const sections = unitStr.split("/");
+    if (sections.length > 2) {
+        throw new QuantityError(
+            `Cannot parse a unit with 2 or more "/" symbols: got "${unitStr}"`,
+        );
+    }
+
+    const numeratorParts = sections[0].trim().split(UNIT_SEPARATOR).map((
+        part,
+    ) => parseSingleUnit(part, additionalUnits));
+
+    const denominatorParts = sections[1]?.trim().split(UNIT_SEPARATOR).map((
+        part,
+    ) => parseSingleUnit(part, additionalUnits));
+
+    if (denominatorParts) {
+        denominatorParts.forEach((x) => x.power *= -1);
+        return numeratorParts.concat(denominatorParts);
+    } else {
+        return numeratorParts;
+    }
+}
