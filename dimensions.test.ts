@@ -1,6 +1,4 @@
-import {
-    assertThrows,
-} from "./asserts.test.ts";
+import { assertThrows } from "./asserts.test.ts";
 import { Dimensions } from "./dimensions.ts";
 import { QuantityError } from "./error.ts";
 
@@ -59,7 +57,8 @@ Deno.test(`Dimensions constructor`, async (t) => {
                 `If a Quantity includes custom dimensions, they must be named via customDimensionNames`,
             );
             // Whereas this won't throw:
-            new Dimensions([...baseDimensions, 1, 0, 1, 0], ["a", "b", "c", "d"]);
+            // deno-fmt-ignore
+            new Dimensions([...baseDimensions, 1, 0, 1, 0], [ "a", "b", "c", "d"]);
         },
     );
 

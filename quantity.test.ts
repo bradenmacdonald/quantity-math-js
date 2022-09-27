@@ -87,20 +87,8 @@ Deno.test("Quantity instance equality", async (t) => {
         "Different custom dimensions, same magnitude and regular dimensions",
         () =>
             new Quantity(-10, {
-                dimensions: new Dimensions([
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    -1,
-                ], ["a", "b", "c", "d"]),
+                // deno-fmt-ignore
+                dimensions: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1], ["a", "b", "c", "d"]),
             }),
         () =>
             new Quantity(-10, {
