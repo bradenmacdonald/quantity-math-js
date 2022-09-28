@@ -51,6 +51,7 @@ export class Quantity {
         }
     }
 
+    /** Is this dimensionless (a pure number with no units)? */
     public get isDimensionless(): boolean {
         return this.dimensions.isDimensionless;
     }
