@@ -306,7 +306,7 @@ export const builtInUnits = makeUnits(
 
 export interface ParsedUnit {
     prefix?: Prefix;
-    unit: Unit;
+    unit: string;
     power: number;
 }
 
@@ -339,20 +339,20 @@ function parseSingleUnit(
 
     if (prefixedUnit in units) {
         // Easiest case: unit exists and is ready to use
-        return { unit: units[prefixedUnit], power };
+        return { unit: prefixedUnit, power };
     } else {
         // Try some prefixes:
-        const firstLetter = prefixedUnit.substring(0, 1);
+        const firstLetter = prefixedUnit[0];
         let rest = prefixedUnit.substring(1);
         if (firstLetter in prefixes && rest in units) {
             // prefixedUnit is a length 1 prefix and unit combined.
-            return { prefix: firstLetter as Prefix, unit: units[rest], power };
+            return { prefix: firstLetter as Prefix, unit: rest, power };
         } else {
             const firstTwo = prefixedUnit.substring(0, 2);
             rest = prefixedUnit.substring(2);
             if (firstTwo in prefixes && rest in units) {
                 // prefixedUnit is a length 2 prefix and unit combined.
-                return { prefix: firstTwo as Prefix, unit: units[rest], power };
+                return { prefix: firstTwo as Prefix, unit: rest, power };
             }
         }
     }
