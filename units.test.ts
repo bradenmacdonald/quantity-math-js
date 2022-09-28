@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "./asserts.test.ts";
 import { QuantityError } from "./error.ts";
-import { ParsedUnit, parseUnit } from "./units.ts";
+import { ParsedUnit, parseUnits } from "./units.ts";
 
 Deno.test(`parseUnit()`, async (t) => {
     const pairs: [input: string, output: ParsedUnit[]][] = [
@@ -33,7 +33,7 @@ Deno.test(`parseUnit()`, async (t) => {
 
     for (const [unitStr, result] of pairs) {
         await t.step(`parseUnit("${unitStr}")`, () => {
-            assertEquals(parseUnit(unitStr), result);
+            assertEquals(parseUnits(unitStr), result);
         });
     }
 
@@ -41,7 +41,7 @@ Deno.test(`parseUnit()`, async (t) => {
         const start = performance.now();
         for (let i = 0; i < 10_000; i++) {
             for (const pair of pairs) {
-                parseUnit(pair[0]);
+                parseUnits(pair[0]);
             }
         }
         const time = performance.now() - start;
@@ -60,7 +60,7 @@ Deno.test(`parseUnit() - invalid Strings`, async (t) => {
 
     for (const [unitStr, errorMsg] of pairs) {
         await t.step(`parseUnit("${unitStr}")`, () => {
-            assertThrows(() => parseUnit(unitStr), QuantityError, errorMsg);
+            assertThrows(() => parseUnits(unitStr), QuantityError, errorMsg);
         });
     }
 });

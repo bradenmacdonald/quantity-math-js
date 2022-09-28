@@ -1,14 +1,26 @@
 import { Dimensionless, Dimensions } from "./dimensions.ts";
+import { QuantityError } from "./error.ts";
+import { builtInUnits, parseUnits, prefixes } from "./units.ts";
 
 export class Quantity {
-    public readonly dimensions: Dimensions;
+    public get magnitude() {
+        return this._magnitude;
+    }
+    protected _dimensions: Dimensions;
+    public get dimensions() {
+        return this._dimensions;
+    }
     public readonly significantFigures: number | undefined;
-    public readonly plusMinus: number | undefined;
+    public get plusMinus() {
+        return this._plusMinus;
+    }
+    protected _plusMinus: number | undefined;
 
     constructor(
-        public readonly magnitude: number,
+        protected _magnitude: number,
         options: {
             dimensions?: Dimensions;
+            units?: string;
             /**
              * If set, only this many of the decimal digits of 'magnitude' are significant.
              */
@@ -17,9 +29,26 @@ export class Quantity {
             plusMinus?: number;
         } = {},
     ) {
-        this.dimensions = options.dimensions ?? Dimensionless;
         this.significantFigures = options.significantFigures;
-        this.plusMinus = options.plusMinus;
+        this._plusMinus = options.plusMinus;
+        if (options.units) {
+            if (options.dimensions) {
+                throw new QuantityError(`You can specify units or dimensions, but not both.`);
+            }
+            const units = parseUnits(options.units);
+            this._dimensions = Dimensionless;
+            for (const u of units) {
+                const unitData = builtInUnits[u.unit as keyof typeof builtInUnits];
+                const scale = u.prefix ? unitData.s * prefixes[u.prefix] : unitData.s;
+                const unitQuantity = new Quantity(scale, { dimensions: unitData.d });
+                unitQuantity._pow(u.power);
+                this._multiply(unitQuantity);
+            }
+        } else if (options.dimensions) {
+            this._dimensions = options.dimensions;
+        } else {
+            this._dimensions = Dimensionless;
+        }
     }
 
     public get isDimensionless(): boolean {
@@ -52,5 +81,46 @@ export class Quantity {
             // TODO: print the units as a string, separated by ⋅ or /
         }
         return r;
+    }
+
+    /** Modify this Quantity in-place by multiplying it with another quantity. */
+    protected _multiply(y: Quantity) {
+        // Multiply the dimensions:
+        this._dimensions = this._dimensions.multiply(y.dimensions);
+
+        // Multiply the error/tolerance/uncertainty:
+        if (this._plusMinus === undefined) {
+            if (y._plusMinus === undefined) {
+                // No error/tolerance/uncertainty in either value.
+            } else {
+                // this has no error/tolerance/uncertainty, but the other value does.
+                this._plusMinus = y._plusMinus * this._magnitude;
+            }
+        } else {
+            if (y._plusMinus) {
+                // When both values have error/tolerance/uncertainty, we need to add the *relative* values:
+                this._plusMinus = ((this._plusMinus / this._magnitude) +
+                    (y._plusMinus / y._magnitude)) *
+                    (this._magnitude * y._magnitude);
+            } else {
+                // this has error/tolerance/uncertainty, but the other value does not.
+                this._plusMinus *= y._magnitude;
+            }
+        }
+
+        // Multiply the magnitude:
+        this._magnitude *= y._magnitude;
+    }
+
+    protected _pow(n: number) {
+        if (n === 1) return;
+        // Raise the dimensions to the given power. This also does a lot of error checking for us:
+        this._dimensions = this._dimensions.pow(n);
+        if (this._plusMinus) {
+            // this has error/tolerance/uncertainty, so do the math for that:
+            const relativeError = this._plusMinus / this._magnitude;
+            this._plusMinus = relativeError * n;
+        }
+        this._magnitude = Math.pow(this._magnitude, n);
     }
 }

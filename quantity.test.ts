@@ -1,9 +1,4 @@
-import {
-    assert,
-    assertEquals,
-    assertFalse,
-    assertNotEquals,
-} from "./asserts.test.ts";
+import { assert, assertEquals, assertFalse, assertNotEquals } from "./asserts.test.ts";
 import { Dimensions } from "./dimensions.ts";
 import { Quantity } from "./quantity.ts";
 
@@ -51,37 +46,19 @@ Deno.test("Quantity instance equality", async (t) => {
     await check(
         "Different dimensions, same magnitude",
         // This one will equal itself:
-        () =>
-            new Quantity(15, {
-                dimensions: new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]),
-            }),
+        () => new Quantity(15, { dimensions: new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]) }),
         // But the one above won't equal this one, with different dimensions:
-        () =>
-            new Quantity(15, {
-                dimensions: new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]),
-            }),
+        () => new Quantity(15, { dimensions: new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]) }),
     );
     await check(
         "Different dimensions, same magnitude (2)",
-        () =>
-            new Quantity(0, {
-                dimensions: new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]),
-            }),
-        () =>
-            new Quantity(0, {
-                dimensions: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0]),
-            }),
+        () => new Quantity(0, { dimensions: new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]) }),
+        () => new Quantity(0, { dimensions: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0]) }),
     );
     await check(
         "Different dimensions, same magnitude (3)",
-        () =>
-            new Quantity(-10, {
-                dimensions: new Dimensions([1, 0, 0, 1, 2, 0, 0, 0]),
-            }),
-        () =>
-            new Quantity(-10, {
-                dimensions: new Dimensions([1, 0, 0, 1, 1, 0, 0, 0]),
-            }),
+        () => new Quantity(-10, { dimensions: new Dimensions([1, 0, 0, 1, 2, 0, 0, 0]) }),
+        () => new Quantity(-10, { dimensions: new Dimensions([1, 0, 0, 1, 1, 0, 0, 0]) }),
     );
     await check(
         "Different custom dimensions, same magnitude and regular dimensions",
@@ -115,4 +92,44 @@ Deno.test("Quantity instance equality", async (t) => {
                 ),
             }),
     );
+});
+
+Deno.test("Constructing Quantity instances with units", async (t) => {
+    const ONE_LENGTH_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]);
+    const TWO_LENGTH_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]);
+    const THREE_LENGTH_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0]);
+
+    await t.step(`new Quantity(15, {units: "m"})`, () => {
+        const q = new Quantity(15, { units: "m" });
+        assertEquals(q.magnitude, 15);
+        assertEquals(q.dimensions, ONE_LENGTH_DIMENSION);
+    });
+
+    await t.step(`new Quantity(15, {units: "km"})`, () => {
+        const q = new Quantity(15, { units: "km" });
+        assertEquals(q.magnitude, 15000);
+        assertEquals(q.dimensions, ONE_LENGTH_DIMENSION);
+    });
+
+    await t.step(`new Quantity(3, {units: "km^2"})`, () => {
+        const q = new Quantity(3, { units: "km^2" });
+        // 3 km^2 is 3e6 m^2:
+        assertEquals(q.magnitude, 3_000_000);
+        assertEquals(q.dimensions, TWO_LENGTH_DIMENSIONS);
+    });
+
+    await t.step(`new Quantity(400, {units: "mm^3"})`, () => {
+        const q = new Quantity(400, { units: "mm^3" });
+        // 400 cubic milimeters is 4e-7 cubic meters.
+        // But if we write 400e-7 we get a tiny error due to binary vs. decimal math,
+        // so we have to write it as 400 * 1e-9, which is how this gets computed.
+        assertEquals(q.magnitude, 400 * 1e-9);
+        assertEquals(q.dimensions, THREE_LENGTH_DIMENSIONS);
+    });
+
+    await t.step(`new Quantity(12, {units: "kg⋅m/s^2"})`, () => {
+        const q = new Quantity(12, { units: "kg⋅m/s^2" });
+        assertEquals(q.magnitude, 12);
+        assertEquals(q.dimensions, new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]));
+    });
 });

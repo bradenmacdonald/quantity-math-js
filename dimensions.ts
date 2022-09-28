@@ -30,13 +30,13 @@ export class Dimensions {
             custom3?: number,
             custom4?: number,
         ],
-        public readonly customDimensionNames?: [
+        public readonly customDimensionNames: [
             /** e.g. "fish", "passengers", "$USD", or whatever other custom unit dimension this is */
             custom1?: string,
             custom2?: string,
             custom3?: string,
             custom4?: string,
-        ],
+        ] = [],
         /**
          * Offset from nominal of the unit (only used for temperatures like "25°C" or "80°F") which
          * are offset from the base unit of Kelvins. Kelvins and *relative* temperatures like
@@ -49,14 +49,14 @@ export class Dimensions {
             );
         }
 
-        const numCustomDimensions = customDimensionNames?.length ?? 0;
+        const numCustomDimensions = customDimensionNames.length;
         if (dimensions.length !== numBasicDimensions + numCustomDimensions) {
             throw new QuantityError(
                 "If a Quantity includes custom dimensions, they must be named via customDimensionNames",
             );
         }
 
-        if (customDimensionNames) {
+        if (customDimensionNames.length) {
             // Make sure customDimensionNames is sorted in alphabetical order, for consistency.
             // This also validated that there are no duplicate custom dimensions (["floop", "floop"])
             const isSorted = customDimensionNames.every((
@@ -82,14 +82,59 @@ export class Dimensions {
             other.offset === this.offset &&
             this.dimensions.length === other.dimensions.length &&
             this.dimensions.every((d, i) => d === other.dimensions[i]) &&
-            this.customDimensionNames?.length ===
-                other.customDimensionNames?.length &&
+            this.customDimensionNames.length ===
+                other.customDimensionNames.length &&
             (
-                this.customDimensionNames === undefined ||
-                this.customDimensionNames.every((cdn, i) =>
-                    cdn === other.customDimensionNames?.[i]
-                )
+                this.customDimensionNames.every((cdn, i) => cdn === other.customDimensionNames?.[i])
             )
+        );
+    }
+
+    /** Multiply these dimensions by another dimensions */
+    public multiply(y: Dimensions): Dimensions {
+        // Special checks required for operations involving units with offsets (Celcius or Farenheit temps):
+        if (this.offset !== 0) {
+            if (y.offset !== 0) {
+                throw new QuantityError(
+                    `Cannot multiply two dimensions with an offset. If using temperatures consider using "deltaC" or "deltaF" instead.`,
+                );
+            } else if (!y.isDimensionless) {
+                throw new QuantityError(
+                    `Can only multiply quantities with an offset by a dimensionless quantity.`,
+                );
+            }
+        }
+
+        if (this.customDimensionNames.length || y.customDimensionNames.length) {
+            throw new QuantityError(
+                "Multiplying custom dimensions is not yet implemented",
+            );
+        }
+
+        const newDimArray = this.dimensions.map((d, i) => d! + y.dimensions[i]!);
+        // deno-lint-ignore no-explicit-any
+        return new Dimensions(newDimArray as any, [], this.offset);
+    }
+
+    /** Raise these dimensions to a power */
+    public pow(n: number): Dimensions {
+        if (typeof n !== "number" || isNaN(n) || !Number.isInteger(n)) {
+            throw new QuantityError(`Dimensions.pow(n): n must be an integer`);
+        }
+        if (n === 0) {
+            return Dimensionless;
+        }
+        if (this.offset !== 0 && n > 1) {
+            throw new QuantityError(
+                `Cannot raise units with zero offsets to powers > 1`,
+            );
+        }
+        const newDimArray = this.dimensions.map((d) => d! * n);
+        return new Dimensions(
+            // deno-lint-ignore no-explicit-any
+            newDimArray as any,
+            this.customDimensionNames,
+            this.offset,
         );
     }
 }

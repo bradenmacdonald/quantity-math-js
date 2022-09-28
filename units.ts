@@ -45,8 +45,7 @@ interface Unit {
 
 // A little helper that makes all the units available to TypeScript, validates
 // their typing, and ensures that the array doesn't get mutated.
-const makeUnits = <UD extends Record<string, Unit>>(ud: UD) =>
-    Object.freeze(ud);
+const makeUnits = <UD extends Record<string, Unit>>(ud: UD) => Object.freeze(ud);
 
 export const builtInUnits = makeUnits(
     {
@@ -320,18 +319,12 @@ function parseSingleUnit(
     unitStr: string,
     additionalUnits?: Readonly<Record<string, Unit>>,
 ): ParsedUnit {
-    const units: Record<string, Unit> = additionalUnits
-        ? { ...builtInUnits, ...additionalUnits }
-        : builtInUnits;
+    const units: Record<string, Unit> = additionalUnits ? { ...builtInUnits, ...additionalUnits } : builtInUnits;
 
     const caretPos = unitStr.indexOf("^");
     // prefixedUnit: The unit possibly with a prefix, e.g. "km", "m", or "Kibit"
-    const prefixedUnit = caretPos === -1
-        ? unitStr
-        : unitStr.substring(0, caretPos);
-    const power = caretPos === -1
-        ? 1
-        : parseInt(unitStr.substring(caretPos + 1, 10));
+    const prefixedUnit = caretPos === -1 ? unitStr : unitStr.substring(0, caretPos);
+    const power = caretPos === -1 ? 1 : parseInt(unitStr.substring(caretPos + 1, 10));
 
     if (!power || unitStr.indexOf(".") !== -1) { // If power is 0 or NaN or a float:
         throw new QuantityError(`Invalid exponent/power on unit "${unitStr}"`);
@@ -364,7 +357,7 @@ const UNIT_SEPARATOR = /\s+|⋅|\*/g;
 /**
  * Parse a unit string, e.g. "km^2" or "kg⋅m/s^2" or "kg m / s^2"
  */
-export function parseUnit(
+export function parseUnits(
     unitStr: string,
     additionalUnits?: Readonly<Record<string, Unit>>,
 ): ParsedUnit[] {
