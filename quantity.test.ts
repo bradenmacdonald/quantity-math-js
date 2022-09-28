@@ -2,6 +2,10 @@ import { assert, assertEquals, assertFalse, assertNotEquals } from "./asserts.te
 import { Dimensions } from "./dimensions.ts";
 import { Quantity } from "./quantity.ts";
 
+const ONE_LENGTH_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]);
+const TWO_LENGTH_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]);
+const THREE_LENGTH_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0]);
+
 Deno.test("Quantity instance equality", async (t) => {
     /**
      * Equality test helper.
@@ -95,10 +99,6 @@ Deno.test("Quantity instance equality", async (t) => {
 });
 
 Deno.test("Constructing Quantity instances with units", async (t) => {
-    const ONE_LENGTH_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]);
-    const TWO_LENGTH_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]);
-    const THREE_LENGTH_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0]);
-
     await t.step(`new Quantity(15, {units: "m"})`, () => {
         const q = new Quantity(15, { units: "m" });
         assertEquals(q.magnitude, 15);
@@ -131,5 +131,22 @@ Deno.test("Constructing Quantity instances with units", async (t) => {
         const q = new Quantity(12, { units: "kg⋅m/s^2" });
         assertEquals(q.magnitude, 12);
         assertEquals(q.dimensions, new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]));
+    });
+});
+
+Deno.test("Multiplying quantities", async (t) => {
+    await t.step(`(5 m) * (3)`, () => {
+        const x = new Quantity(5, { units: "m" });
+        const y = new Quantity(3);
+        const z = x.multiply(y);
+        assertEquals(z.magnitude, 15);
+        assertEquals(z.dimensions, ONE_LENGTH_DIMENSION); // m
+    });
+    await t.step(`(5 m) * (3 m)`, () => {
+        const x = new Quantity(5, { units: "m" });
+        const y = new Quantity(3, { units: "m" });
+        const z = x.multiply(y);
+        assertEquals(z.magnitude, 15);
+        assertEquals(z.dimensions, TWO_LENGTH_DIMENSIONS); // m^2
     });
 });

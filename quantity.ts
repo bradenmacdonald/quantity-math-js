@@ -84,6 +84,14 @@ export class Quantity {
         return r;
     }
 
+    protected _clone(): Quantity {
+        return new Quantity(this._magnitude, {
+            dimensions: this._dimensions,
+            plusMinus: this._plusMinus,
+            significantFigures: this.significantFigures,
+        });
+    }
+
     /** Modify this Quantity in-place by multiplying it with another quantity. */
     protected _multiply(y: Quantity) {
         // Multiply the dimensions:
@@ -113,6 +121,14 @@ export class Quantity {
         this._magnitude *= y._magnitude;
     }
 
+    /** Multiply this Quantity by another Quantity and return the new result */
+    public multiply(y: Quantity): Quantity {
+        const result = this._clone();
+        result._multiply(y);
+        return result;
+    }
+
+    /** Modify this Quantity in-place by raising it to the given power. */
     protected _pow(n: number) {
         if (n === 1) return;
         // Raise the dimensions to the given power. This also does a lot of error checking for us:
