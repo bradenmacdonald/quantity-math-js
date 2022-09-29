@@ -2,6 +2,13 @@ import { Dimensionless, Dimensions } from "./dimensions.ts";
 import { QuantityError } from "./error.ts";
 import { builtInUnits, parseUnits, prefixes } from "./units.ts";
 
+export interface SerializedQuantity {
+    magnitude: number;
+    significantFigures?: number;
+    plusMinus?: number;
+    units: string;
+}
+
 export class Quantity {
     public get magnitude() {
         return this._magnitude;
@@ -15,6 +22,7 @@ export class Quantity {
         return this._plusMinus;
     }
     protected _plusMinus: number | undefined;
+    protected readonly _offsetUsed: number | undefined;
 
     constructor(
         protected _magnitude: number,
@@ -51,6 +59,8 @@ export class Quantity {
                         // e.g. "50 °C per kilometer" doesn't make any sense, but "50 ΔC per kilometer" could make sense.
                     }
                     this._magnitude += unitData.offset;
+                    // We need to track the offset for the getWithUnits() method to be able to do conversions properly.
+                    this._offsetUsed = unitData.offset;
                 }
             }
         } else if (options.dimensions) {
@@ -91,6 +101,29 @@ export class Quantity {
             // TODO: print the units as a string, separated by ⋅ or /
         }
         return r;
+    }
+
+    public getWithUnits(units: string): SerializedQuantity {
+        const converter = new Quantity(1, { units });
+        if (!converter.sameDimensionsAs(this)) {
+            throw new QuantityError("Cannot convert units that aren't compatible.");
+        }
+        if (converter._offsetUsed) {
+            // For units of C/F temperature or "gauge Pascals" that have an offset, undo that offset
+            // so that the converter represents the unit quantity.
+            converter._magnitude -= converter._offsetUsed;
+        }
+        const result: SerializedQuantity = {
+            magnitude: (this._magnitude - (converter._offsetUsed ?? 0)) / converter._magnitude,
+            units,
+        };
+        if (this.significantFigures) {
+            result.significantFigures = this.significantFigures;
+        }
+        if (this.plusMinus) {
+            result.plusMinus = this.plusMinus / converter.magnitude;
+        }
+        return result;
     }
 
     protected _clone(): Quantity {

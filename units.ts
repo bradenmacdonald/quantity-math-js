@@ -91,9 +91,10 @@ export const builtInUnits = makeUnits(
         // "ang": { "s": 1e-10, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
         // "picapt": { "s": 3.52777777777778e-4, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
         // "pica": { "s": 4.23333333333333e-3, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
-        // "in": { "s": 2.54e-2, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
+        /** Inches */
+        "in": { s: 2.54e-2, d: new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]) },
         // "mil": { "s": 2.54e-5, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
-        // "ft": { "s": 3.048e-1, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
+        "ft": { s: 3.048e-1, d: new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]) },
         // "yd": { "s": 9.144e-1, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
         // "ell": { "s": 1.143e+0, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
         // "mi": { "s": 1.609344e+3, "d": [0, 1, 0, 0, 0, 0, 0, 0] },
@@ -121,7 +122,8 @@ export const builtInUnits = makeUnits(
         "s": { s: 1e+0, d: new Dimensions([0, 0, 1, 0, 0, 0, 0, 0]) },
         // "sec": { "s": 1e+0, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
         // "min": { "s": 6e+1, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
-        // "hr": { "s": 3.6e+3, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
+        /** Hours */
+        "hr": { s: 3.6e+3, d: new Dimensions([0, 0, 1, 0, 0, 0, 0, 0]) },
         // "day": { "s": 8.64e+4, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
         // "week": { "s": 6.048e+5, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
         // "fortnight": { "s": 1.2096e+6, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
@@ -134,11 +136,7 @@ export const builtInUnits = makeUnits(
         "K": { s: 1e+0, d: new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]) },
         /** Difference in temperature, degrees Celcius */
         "deltaC": { s: 1e+0, d: new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]) },
-        // "degF": {
-        //     "s": 5.555555555555556e-1,
-        //     "d": [0, 0, 0, 1, 0, 0, 0, 0],
-        //     "o": 2.553722222222222e+2,
-        // },
+        "degF": { s: 5.555555555555556e-1, d: new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]), offset: 2.553722222222222e+2 },
         /** A specific temperature, in degrees Celcius, like "water freezes at 0°C"; not a relative temperature. */
         "degC": { s: 1e+0, d: new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]), offset: 2.7315e+2 },
         // "Ra": { "s": 5.555555555555556e-1, "d": [0, 0, 0, 1, 0, 0, 0, 0] },

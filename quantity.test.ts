@@ -137,6 +137,12 @@ Deno.test("Constructing Quantity instances with units", async (t) => {
         assertEquals(q.magnitude, 12);
         assertEquals(q.dimensions, FORCE_DIMENSIONS);
     });
+
+    await t.step(`new Quantity(20, {units: "degC"})`, () => {
+        const q = new Quantity(20, { units: "degC" });
+        assertEquals(q.magnitude, 293.15);
+        assertEquals(q.dimensions, ONE_TEMP_DIMENSION);
+    });
 });
 
 Deno.test("Adding quantities", async (t) => {
