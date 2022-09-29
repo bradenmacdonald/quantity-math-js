@@ -54,6 +54,12 @@ Deno.test("Quantity conversions", async (t) => {
     // Speed:
     await check(1, { units: "m/s" }, "km/h", { magnitude: 3.6 });
     await check(1, { units: "c" }, "m/s", { magnitude: 299792458 });
+    // Pressure
+    await check(1, { units: "Pa" }, "N/m^2", { magnitude: 1 });
+    await check(123, { units: "kPa" }, "psi", { magnitude: 17.839641741 });
+    await check(50, { units: "psi" }, "kPa", { magnitude: 344.737864658 });
+    await check(50, { units: "psi" }, "kN/m^2", { magnitude: 344.737864658 });
+    await check(1, { units: "atm" }, "kPa", { magnitude: 101.325 });
     // Force:
     await check(1234, { units: "kg⋅m/s^2" }, "N", { magnitude: 1234 });
     await check(1234, { units: "N" }, "g⋅m/s^2", { magnitude: 1234000 });
@@ -69,6 +75,22 @@ Deno.test("Quantity conversions", async (t) => {
     await check(317, { units: "mL" }, "cm^3", { magnitude: 317 });
     await check(1.5, { units: "L" }, "cm^3", { magnitude: 1500 });
     await check(1234, { units: "cm^3" }, "L", { magnitude: 1.234 });
+    // Area
+    await check(1, { units: "ha" }, "m^2", { magnitude: 1e4 });
+    // Information
+    await check(24, { units: "b" }, "B", { magnitude: 3 }); // 24 bits is 3 bytes
+    await check(1, { units: "B" }, "b", { magnitude: 8 }); // 1 Byte is 8 bits
+    await check(1, { units: "KiB" }, "B", { magnitude: 1024 }); // 1 KibiByte is 1024 bytes
+    await check(1, { units: "MiB" }, "B", { magnitude: 1_048_576 }); // A mebibyte equals 2^20 or 1,048,576 bytes.
+    await check(1, { units: "MiB" }, "KiB", { magnitude: 1024 });
+    await check(1, { units: "GB" }, "B", { magnitude: 1e9 }); // As used in e.g. hard drive capacity, a "Gigabyte" is 1 billion bytes
+    await check(1, { units: "GiB" }, "B", { magnitude: 1_073_741_824 }); // As used in e.g. software, or memory, a "gibibyte" is 2^30 bytes
+    await check(1, { units: "GiB" }, "MiB", { magnitude: 1024 });
+    await check(1, { units: "TiB" }, "GiB", { magnitude: 1024 });
+    await check(1, { units: "PiB" }, "TiB", { magnitude: 1024 });
+    await check(1, { units: "EiB" }, "PiB", { magnitude: 1024 });
+    await check(1, { units: "ZiB" }, "EiB", { magnitude: 1024 });
+    await check(1, { units: "YiB" }, "ZiB", { magnitude: 1024 });
     // Misc
 
     await t.step("invalid conversions", () => {

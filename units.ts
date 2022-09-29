@@ -13,7 +13,8 @@ export const prefixes = Object.freeze({
     m: 1e-3,
     c: 1e-2,
     d: 1e-1,
-    da: 1e+1,
+    // We do not support the "da" prefix (although official, it is rarely used, and this allows us to assume that all 1-digit prefixes are metric/SI and all 2-digit are binary)
+    // da: 1e+1,
     h: 1e+2,
     k: 1e+3,
     M: 1e+6,
@@ -43,6 +44,8 @@ interface Unit {
     readonly offset?: number;
     /** Can metric prefixes like k-, m-, M-, etc. be used with this unit? */
     readonly prefixable?: true;
+    /** Can binary prefixes like Ki-, Mi-, Gi-, etc. be used with this unit? */
+    readonly binaryPrefixable?: true;
 }
 
 // A little helper that makes all the units available to TypeScript, validates
@@ -57,6 +60,9 @@ const TEMP_DIMENSION = new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]);
 const NRGY_DIMENSIONS = new Dimensions([1, 2, -2, 0, 0, 0, 0, 0]);
 const POWR_DIMENSIONS = new Dimensions([1, 2, -3, 0, 0, 0, 0, 0]);
 const VOLM_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0]);
+const AREA_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]);
+const INFO_DIMENSIONS = new Dimensions([0, 0, 0, 0, 0, 0, 0, 1]);
+const PRSR_DIMENSIONS = new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]);
 
 export const builtInUnits = makeUnits(
     {
@@ -185,25 +191,25 @@ export const builtInUnits = makeUnits(
         "c": { s: 2.99792458e+8, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
         // "grav": { s: 9.80665e+0, d: new Dimensions([0, 1, -2, 0, 0, 0, 0, 0]) },
         // "galileo": { s: 1e-2, d: new Dimensions([0, 1, -2, 0, 0, 0, 0, 0]) },
-        // "Pa": { s: 1e+0, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]), prefixable: true },
-        // "mHg": { s: 1.3332239e+5, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "mH2O": { s: 9.80665e+3, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "Torr": { s: 1.33322368421053e+2, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "psi": { s: 6.89475729316836e+3, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "atm": { s: 1.01325e+5, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "bar": { s: 1e+5, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "inHg": { s: 3.3863886666667e+3, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "inH2O": { s: 2.4908891e+2, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "ftHg": { s: 4.0636664e+4, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "ftH2O": { s: 2.98906692e+3, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "Ba": { s: 1e-1, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },
-        // "Pa-g": { s: 1e+0, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]), "o": 1.01325e+5 },
-        // "bar-g": { s: 1e+5, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]), "o": 1.01325e+5 },
-        // "psi-g": {
-        //     "s": 6.89475729316836e+3,
-        //     "d": [1, -1, -2, 0, 0, 0, 0, 0],
-        //     "o": 1.01325e+5,
-        // },
+        /** Pascal: SI standard unit for pressure defined as 1 N/m^2 */
+        "Pa": { s: 1e+0, d: PRSR_DIMENSIONS, prefixable: true },
+        // "mHg": { s: 1.3332239e+5, d: PRSR_DIMENSIONS },
+        // "mH2O": { s: 9.80665e+3, d: PRSR_DIMENSIONS },
+        // "Torr": { s: 1.33322368421053e+2, d: PRSR_DIMENSIONS },
+        /** Pounds per square inch */
+        "psi": { s: 6.89475729316836e+3, d: PRSR_DIMENSIONS },
+        /** Standard atmosphere, equal to 101325 pascals (Pa) */
+        "atm": { s: 1.01325e+5, d: PRSR_DIMENSIONS },
+        /** The bar is a deprecated metric unit of pressure */
+        // "bar": { s: 1e+5, d: PRSR_DIMENSIONS },
+        // "inHg": { s: 3.3863886666667e+3, d: PRSR_DIMENSIONS },
+        // "inH2O": { s: 2.4908891e+2, d: PRSR_DIMENSIONS },
+        // "ftHg": { s: 4.0636664e+4, d: PRSR_DIMENSIONS },
+        // "ftH2O": { s: 2.98906692e+3, d: PRSR_DIMENSIONS },
+        // "Ba": { s: 1e-1, d: PRSR_DIMENSIONS },
+        // "Pa-g": { s: 1e+0, d: PRSR_DIMENSIONS, offset: 1.01325e+5 },
+        // "bar-g": { s: 1e+5, d: PRSR_DIMENSIONS, offset: 1.01325e+5 },
+        // "psi-g": { s: 6.89475729316836e+3, d: PRSR_DIMENSIONS, offset: 1.01325e+5},
 
         // Force
 
@@ -233,7 +239,11 @@ export const builtInUnits = makeUnits(
         // "ft-lb": { s: 1.3558179483314e+0, d: NRGY_DIMENSIONS },
         // "ft-lbf": { s: 1.3558179483314e+0, d: NRGY_DIMENSIONS },
 
+        // Insulation
+
+        /** R-value, SI: thermal resistance per unit area */
         // "RSI": { s: 1e+0, d: new Dimensions([-1, 0, 3, 1, 0, 0, 0, 0]) },
+        /** R-value, Inch-Pound: thermal resistance per unit area */
         // "RIP": { s: 1.7611018368230189e-1, d: new Dimensions([-1, 0, 3, 1, 0, 0, 0, 0]) },
         // "clo": { s: 1.55e-1, d: new Dimensions([-1, 0, 3, 1, 0, 0, 0, 0]) },
         // "tog": { s: 1e-1, d: new Dimensions([-1, 0, 3, 1, 0, 0, 0, 0]) },
@@ -247,8 +257,11 @@ export const builtInUnits = makeUnits(
         /** Mechanical Horsepower - Defined as 33 000 ft lbf / min */
         "HP": { s: 7.4569987158227e+2, d: POWR_DIMENSIONS },
 
+        /** Poise (CGS unit for dynamic viscosity); recommend use of pascal-second (Pa⋅s) instead. */
         // "P": { s: 1e-1, d: new Dimensions([1, -1, -1, 0, 0, 0, 0, 0]) },
+        /** Rhe: CGS unit for fluidity, equal to exactly 1 P^-1 */
         // "rhe": { s: 1e+1, d: new Dimensions([-1, 1, 1, 0, 0, 0, 0, 0]) },
+        /** Stokes: CGS unit for kinematic viscosity */
         // "St": { s: 1e-4, d: new Dimensions([0, 2, -1, 0, 0, 0, 0, 0]) },
 
         // Volume:
@@ -282,19 +295,26 @@ export const builtInUnits = makeUnits(
         // "dry_pt": { s: 5.506104713575e-4, d: VOLM_DIMENSIONS },
         // "stere": { s: 1e+0, d: VOLM_DIMENSIONS },
 
-        // "ar": { s: 1e+2, d: new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]) },
-        // "morgen": { s: 2.5e+3, d: new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]) },
-        // "acre": { s: 4.04687260987425e+3, d: new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]) },
-        // "us_acre": { s: 4.04687260987425e+3, d: new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]) },
-        // "uk_acre": { s: 4.0468564224e+3, d: new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]) },
-        // "ha": { s: 1e+4, d: new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]) },
-        // "barn": { s: 1e-28, d: new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]) },
-        // "b": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 1]) },
-        // "bit": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 1]) },
-        // "B": { s: 8e+0, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 1]) },
-        // "byte": { s: 8e+0, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 1]) },
-        // "word": { s: 1.6e+1, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 1]) },
-        // "dword": { s: 3.2e+1, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 1]) },
+        // "ar": { s: 1e+2, d: AREA_DIMENSIONS },
+        // "morgen": { s: 2.5e+3, d: AREA_DIMENSIONS },
+        // "acre": { s: 4.04687260987425e+3, d: AREA_DIMENSIONS },
+        // "us_acre": { s: 4.04687260987425e+3, d: AREA_DIMENSIONS },
+        // "uk_acre": { s: 4.0468564224e+3, d: AREA_DIMENSIONS },
+        /** hectare: non-SI metric unit of area equal to a square with 100-metre sides */
+        "ha": { s: 1e+4, d: AREA_DIMENSIONS },
+        // "barn": { s: 1e-28, d: AREA_DIMENSIONS },
+
+        // Information
+
+        /** bit */
+        "b": { s: 1, d: INFO_DIMENSIONS, prefixable: true, binaryPrefixable: true },
+        // "bit": { s: 1e+0, d: INFO_DIMENSIONS },
+        /** byte */
+        "B": { s: 8, d: INFO_DIMENSIONS, prefixable: true, binaryPrefixable: true },
+        // "byte": { s: 8e+0, d: INFO_DIMENSIONS },
+        // "word": { s: 1.6e+1, d: INFO_DIMENSIONS },
+        // "dword": { s: 3.2e+1, d: INFO_DIMENSIONS },
+
         // "baud": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 1]) },
         // "A": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 1, 0, 0, 0]), prefixable: true },
         // "C": { s: 1e+0, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]) },
@@ -402,8 +422,8 @@ function parseSingleUnit(
         } else {
             const firstTwo = prefixedUnit.substring(0, 2);
             rest = prefixedUnit.substring(2);
-            if (firstTwo in prefixes && units[rest]?.prefixable) {
-                // prefixedUnit is a length 2 prefix and unit combined.
+            if (firstTwo in prefixes && units[rest]?.binaryPrefixable) {
+                // prefixedUnit is a length 2 (binary) prefix like "Ki" and unit combined.
                 return { prefix: firstTwo as Prefix, unit: rest, power };
             }
         }
