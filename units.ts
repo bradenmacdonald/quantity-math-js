@@ -136,7 +136,8 @@ export const builtInUnits = makeUnits(
         /** Minutes */
         "min": { s: 6e+1, d: TIME_DIMENSION },
         /** Hours */
-        "hr": { s: 3.6e+3, d: TIME_DIMENSION },
+        "h": { s: 3.6e+3, d: TIME_DIMENSION },
+        // "hr": { s: 3.6e+3, d: TIME_DIMENSION },
         /** Days */
         "day": { s: 8.64e+4, d: TIME_DIMENSION },
         "week": { s: 6.048e+5, d: TIME_DIMENSION },
@@ -167,7 +168,7 @@ export const builtInUnits = makeUnits(
         // "fps": { s: 3.048e-1, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
         // "knot": { s: 5.14444444444444e-1, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
         // "admkn": { s: 5.14773333333333e-1, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
-        // "c": { s: 2.99792458e+8, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
+        "c": { s: 2.99792458e+8, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
         // "grav": { s: 9.80665e+0, d: new Dimensions([0, 1, -2, 0, 0, 0, 0, 0]) },
         // "galileo": { s: 1e-2, d: new Dimensions([0, 1, -2, 0, 0, 0, 0, 0]) },
         // "Pa": { s: 1e+0, d: new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]) },

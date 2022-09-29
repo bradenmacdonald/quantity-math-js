@@ -31,10 +31,10 @@ Deno.test("Quantity conversions", async (t) => {
     // Time:
     await check(120, { units: "s" }, "min", { magnitude: 2 });
     await check(3, { units: "min" }, "s", { magnitude: 180 });
-    await check(45, { units: "min" }, "hr", { magnitude: 0.75 });
-    await check(1, { units: "hr" }, "s", { magnitude: 3600 });
-    await check(24, { units: "hr" }, "day", { magnitude: 1 });
-    await check(2, { units: "day" }, "hr", { magnitude: 48 });
+    await check(45, { units: "min" }, "h", { magnitude: 0.75 });
+    await check(1, { units: "h" }, "s", { magnitude: 3600 });
+    await check(24, { units: "h" }, "day", { magnitude: 1 });
+    await check(2, { units: "day" }, "h", { magnitude: 48 });
     await check(7, { units: "day" }, "week", { magnitude: 1 });
     await check(2, { units: "week" }, "day", { magnitude: 14 });
     await check(1, { units: "yr" }, "day", { magnitude: 365 });
@@ -47,6 +47,9 @@ Deno.test("Quantity conversions", async (t) => {
     await check(300, { units: "degC" }, "degC", { magnitude: 300 });
     await check(300, { units: "K" }, "degC", { magnitude: 26.85 });
     await check(0, { units: "K" }, "degC", { magnitude: -273.15 });
+    // Speed:
+    await check(1, { units: "m/s" }, "km/h", { magnitude: 3.6 });
+    await check(1, { units: "c" }, "m/s", { magnitude: 299792458 });
     // Force:
     await check(1234, { units: "kg⋅m/s^2" }, "N", { magnitude: 1234 });
     await check(1234, { units: "N" }, "g⋅m/s^2", { magnitude: 1234000 });
