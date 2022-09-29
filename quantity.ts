@@ -117,6 +117,10 @@ export class Quantity {
             }
         }
 
+        if (this.significantFigures || y.significantFigures) {
+            throw new QuantityError("Multiplication of significant figures is not yet implemented.");
+        }
+
         // Multiply the magnitude:
         this._magnitude *= y._magnitude;
     }

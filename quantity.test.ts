@@ -5,6 +5,8 @@ import { Quantity } from "./quantity.ts";
 const ONE_LENGTH_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]);
 const TWO_LENGTH_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]);
 const THREE_LENGTH_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0]);
+/** Force is mass*length/time^2 */
+const FORCE_DIMENSIONS = new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]);
 
 Deno.test("Quantity instance equality", async (t) => {
     /**
@@ -130,7 +132,7 @@ Deno.test("Constructing Quantity instances with units", async (t) => {
     await t.step(`new Quantity(12, {units: "kg⋅m/s^2"})`, () => {
         const q = new Quantity(12, { units: "kg⋅m/s^2" });
         assertEquals(q.magnitude, 12);
-        assertEquals(q.dimensions, new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]));
+        assertEquals(q.dimensions, FORCE_DIMENSIONS);
     });
 });
 
@@ -147,6 +149,34 @@ Deno.test("Multiplying quantities", async (t) => {
         const y = new Quantity(3, { units: "m" });
         const z = x.multiply(y);
         assertEquals(z.magnitude, 15);
-        assertEquals(z.dimensions, TWO_LENGTH_DIMENSIONS); // m^2
+        assertEquals(z.dimensions, TWO_LENGTH_DIMENSIONS); // m²
+    });
+    await t.step(`(500 g) * (2 m/s^2)`, () => {
+        const x = new Quantity(500, { units: "g" });
+        const y = new Quantity(2, { units: "m/s^2" });
+        const z = x.multiply(y);
+        // equals 1 kg⋅m/s² (units of force)
+        assertEquals(z.magnitude, 1.0);
+        assertEquals(z.dimensions, FORCE_DIMENSIONS);
+    });
+});
+
+Deno.test("Uncertainty/tolerance", async (t) => {
+    await t.step(`a number can have an uncertainty/tolerance value specified`, () => {
+        const x = new Quantity(5, { units: "m", plusMinus: 0.02 });
+        assertEquals(x.magnitude, 5);
+        assertEquals(x.plusMinus, 0.02);
+        // assertEquals(x.toString(), "5±0.02 m"); // TODO: uncomment this.
+    });
+
+    await t.step(`when multiplying two quantities, the relative error is added.`, () => {
+        // x = (4.52 ± 0.02) cm, y = (2.0 ± 0.2) cm.
+        // Then z = xy = 9.04 ± 0.944 cm² which rounds to 9.0 ± 0.9 cm²
+        const x = new Quantity(4.52, { units: "cm", plusMinus: 0.02 });
+        const y = new Quantity(2.0, { units: "cm", plusMinus: 0.2 });
+        const z = x.multiply(y);
+        assertEquals(z.magnitude, 9.04e-4);
+        assertEquals(z.plusMinus, 0.944e-4);
+        // assertEquals(z.toString(), "9.0±0.9 cm²"); // TODO: uncomment this.
     });
 });
