@@ -127,14 +127,20 @@ export const builtInUnits = makeUnits(
         // "fortnight": { "s": 1.2096e+6, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
         // "yr": { "s": 3.1536e+7, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
         // "shake": { "s": 1e-8, "d": [0, 0, 1, 0, 0, 0, 0, 0] },
-        // "K": { "s": 1e+0, "d": [0, 0, 0, 1, 0, 0, 0, 0] },
-        // "deltaC": { "s": 1e+0, "d": [0, 0, 0, 1, 0, 0, 0, 0] },
+
+        // Temperature
+
+        /** Kelvins */
+        "K": { s: 1e+0, d: new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]) },
+        /** Difference in temperature, degrees Celcius */
+        "deltaC": { s: 1e+0, d: new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]) },
         // "degF": {
         //     "s": 5.555555555555556e-1,
         //     "d": [0, 0, 0, 1, 0, 0, 0, 0],
         //     "o": 2.553722222222222e+2,
         // },
-        // "degC": { "s": 1e+0, "d": [0, 0, 0, 1, 0, 0, 0, 0], "o": 2.7315e+2 },
+        /** A specific temperature, in degrees Celcius, like "water freezes at 0°C"; not a relative temperature. */
+        "degC": { s: 1e+0, d: new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]), offset: 2.7315e+2 },
         // "Ra": { "s": 5.555555555555556e-1, "d": [0, 0, 0, 1, 0, 0, 0, 0] },
         // "Rank": { "s": 5.555555555555556e-1, "d": [0, 0, 0, 1, 0, 0, 0, 0] },
         // "deltaF": { "s": 5.555555555555556e-1, "d": [0, 0, 0, 1, 0, 0, 0, 0] },

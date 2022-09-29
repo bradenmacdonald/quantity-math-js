@@ -43,6 +43,15 @@ export class Quantity {
                 const unitQuantity = new Quantity(scale, { dimensions: unitData.d });
                 unitQuantity._pow(u.power);
                 this._multiply(unitQuantity);
+                if ("offset" in unitData) {
+                    if (units.length !== 1) {
+                        throw new QuantityError(
+                            `It is not permitted to use compound units that include the offset unit "${u}". Try using K, deltaC, or Pa instead.`,
+                        );
+                        // e.g. "50 °C per kilometer" doesn't make any sense, but "50 ΔC per kilometer" could make sense.
+                    }
+                    this._magnitude += unitData.offset;
+                }
             }
         } else if (options.dimensions) {
             this._dimensions = options.dimensions;
@@ -92,6 +101,34 @@ export class Quantity {
         });
     }
 
+    /** Add this to another Quantity, returning the result as a new Quantity object */
+    public add(y: Quantity): Quantity {
+        if (!this._dimensions.equalTo(y._dimensions)) {
+            throw new QuantityError(`Cannot add quanitites with different units.`);
+        }
+
+        let plusMinus = undefined;
+        if (this._plusMinus || y._plusMinus) {
+            // When adding two quantities, the values of the uncertainty/tolerance are simply added:
+            plusMinus = (this._plusMinus ?? 0) + (y._plusMinus ?? 0);
+        }
+
+        const significantFigures: number | undefined = undefined;
+        if (this.significantFigures || y.significantFigures) {
+            // Rule for adding/subtracting with significant figures:
+            // 1. Find the place position of the last significant digit in the least certain number
+            // 2. Add and/or subtract the numbers as usual
+            // 3. The final number of significant figures is the number of digits up to the place position found in step 1
+            throw new QuantityError("Addition of significant figures is not yet implemented.");
+        }
+
+        return new Quantity(this._magnitude + y._magnitude, {
+            dimensions: this._dimensions,
+            plusMinus,
+            significantFigures,
+        });
+    }
+
     /** Modify this Quantity in-place by multiplying it with another quantity. */
     protected _multiply(y: Quantity) {
         // Multiply the dimensions:
@@ -108,8 +145,7 @@ export class Quantity {
         } else {
             if (y._plusMinus) {
                 // When both values have error/tolerance/uncertainty, we need to add the *relative* values:
-                this._plusMinus = ((this._plusMinus / this._magnitude) +
-                    (y._plusMinus / y._magnitude)) *
+                this._plusMinus = ((this._plusMinus / this._magnitude) + (y._plusMinus / y._magnitude)) *
                     (this._magnitude * y._magnitude);
             } else {
                 // this has error/tolerance/uncertainty, but the other value does not.

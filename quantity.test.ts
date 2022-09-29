@@ -1,8 +1,11 @@
-import { assert, assertEquals, assertFalse, assertNotEquals } from "./asserts.test.ts";
+import { assert, assertEquals, assertFalse, assertNotEquals, assertThrows } from "./asserts.test.ts";
 import { Dimensions } from "./dimensions.ts";
+import { QuantityError } from "./error.ts";
 import { Quantity } from "./quantity.ts";
 
+const ONE_MASS_DIMENSION = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]);
 const ONE_LENGTH_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]);
+const ONE_TEMP_DIMENSION = new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]);
 const TWO_LENGTH_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]);
 const THREE_LENGTH_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0]);
 /** Force is mass*length/time^2 */
@@ -133,6 +136,83 @@ Deno.test("Constructing Quantity instances with units", async (t) => {
         const q = new Quantity(12, { units: "kg⋅m/s^2" });
         assertEquals(q.magnitude, 12);
         assertEquals(q.dimensions, FORCE_DIMENSIONS);
+    });
+});
+
+Deno.test("Adding quantities", async (t) => {
+    await t.step(`cannot add units of different dimensions`, () => {
+        const x = new Quantity(5, { units: "m" });
+        const y = new Quantity(3);
+        assertThrows(
+            () => {
+                x.add(y);
+            },
+            QuantityError,
+            `Cannot add quanitites with different units.`,
+        );
+    });
+    await t.step(`cannot add units of different dimensions (2)`, () => {
+        const x = new Quantity(5, { units: "m" });
+        const y = new Quantity(3, { units: "m^2" });
+        assertThrows(
+            () => {
+                x.add(y);
+            },
+            QuantityError,
+            `Cannot add quanitites with different units.`,
+        );
+    });
+    await t.step(`cannot add units of different dimensions (3)`, () => {
+        const x = new Quantity(5, { units: "m" });
+        const y = new Quantity(3, { units: "g" });
+        assertThrows(
+            () => {
+                x.add(y);
+            },
+            QuantityError,
+            `Cannot add quanitites with different units.`,
+        );
+    });
+    await t.step(`(25 g) + (17 g)`, () => {
+        const x = new Quantity(25, { units: "g" });
+        const y = new Quantity(17, { units: "g" });
+        const z = x.add(y);
+        assertEquals(z.magnitude, 0.042);
+        assertEquals(z.dimensions, ONE_MASS_DIMENSION);
+        assertEquals(z, y.add(x));
+    });
+    await t.step(`(5 kg) + (500 g)`, () => {
+        const x = new Quantity(5, { units: "kg" });
+        const y = new Quantity(500, { units: "g" });
+        const z = x.add(y);
+        assertEquals(z.magnitude, 5.5);
+        assertEquals(z.dimensions, ONE_MASS_DIMENSION);
+        assertEquals(z, y.add(x));
+    });
+    await t.step(`(5 kg) + (-500 g)`, () => {
+        const x = new Quantity(5, { units: "kg" });
+        const y = new Quantity(-500, { units: "g" });
+        const z = x.add(y);
+        assertEquals(z.magnitude, 4.5);
+        assertEquals(z.dimensions, ONE_MASS_DIMENSION);
+        assertEquals(z, y.add(x));
+    });
+
+    // Adding temperatures:
+    await t.step(`temperatures in Kelvin add normally: (100 K) + (25 K) = (125 K)`, () => {
+        const x = new Quantity(100, { units: "K" });
+        const y = new Quantity(25, { units: "K" });
+        const z = x.add(y);
+        assertEquals(z.magnitude, 125);
+        assertEquals(z.dimensions, ONE_TEMP_DIMENSION);
+        assertEquals(z, y.add(x));
+    });
+    await t.step(`an exact temperature in °C can have a ΔC added to it.`, () => {
+        const x = new Quantity(100, { units: "degC" });
+        const y = new Quantity(25, { units: "deltaC" });
+        const z = x.add(y);
+        assertEquals(z.magnitude, 273.15 + 125); // in K
+        assertEquals(z.dimensions, ONE_TEMP_DIMENSION);
     });
 });
 
