@@ -21,7 +21,7 @@ Deno.test(`parseUnits()`, async (t) => {
             { unit: "m", power: 1 },
             { unit: "s", power: -2 },
         ]],
-        ["kg*m*s^-2", [
+        ["kg⋅m⋅s^-2", [
             { prefix: "k", unit: "g", power: 1 },
             { unit: "m", power: 1 },
             { unit: "s", power: -2 },

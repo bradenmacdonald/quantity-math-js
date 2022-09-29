@@ -411,7 +411,7 @@ function parseSingleUnit(
     throw new QuantityError(`Unable to parse the unit "${unitStr}"`);
 }
 
-const UNIT_SEPARATOR = /\s+|⋅|\*/g;
+const UNIT_SEPARATOR = /\s+|⋅/g;
 
 /**
  * Parse a unit string, e.g. "km^2" or "kg⋅m/s^2" or "kg m / s^2"
