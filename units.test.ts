@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "./asserts.test.ts";
 import { QuantityError } from "./error.ts";
 import { ParsedUnit, parseUnits } from "./units.ts";
 
-Deno.test(`parseUnit()`, async (t) => {
+Deno.test(`parseUnits()`, async (t) => {
     const pairs: [input: string, output: ParsedUnit[]][] = [
         ["mm", [{ prefix: "m", unit: "m", power: 1 }]],
         ["km", [{ prefix: "k", unit: "m", power: 1 }]],
@@ -51,11 +51,19 @@ Deno.test(`parseUnit()`, async (t) => {
     });
 });
 
-Deno.test(`parseUnit() - invalid Strings`, async (t) => {
+Deno.test(`parseUnits() - invalid Strings`, async (t) => {
     const pairs: [input: string, errorMsg: string][] = [
         ["foo", `Unable to parse the unit "foo"`],
         ["mm^X", `Invalid exponent/power on unit "mm^X"`],
         ["mm^1.5", `Invalid exponent/power on unit "mm^1.5"`],
+        // These units do not support prefixes:
+        ["k%", `Unable to parse the unit "k%"`], // kilo-percent
+        ["mlb", `Unable to parse the unit "mlb"`], // milli-pound
+        ["nin", `Unable to parse the unit "nin"`], // nano-inch
+        ["Mft", `Unable to parse the unit "Mft"`], // mega-foot
+        ["mmin", `Unable to parse the unit "mmin"`], // milli-minute
+        ["kh", `Unable to parse the unit "kh"`], // kilo-hour
+        ["kka", `Unable to parse the unit "kka"`], // kilo-kilo-annum
     ];
 
     for (const [unitStr, errorMsg] of pairs) {

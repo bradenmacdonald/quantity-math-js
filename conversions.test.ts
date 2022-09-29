@@ -29,6 +29,7 @@ Deno.test("Quantity conversions", async (t) => {
     // Mass:
     await check(500, { units: "g" }, "kg", { magnitude: 0.5 });
     // Time:
+    await check(500, { units: "ms" }, "s", { magnitude: 0.5 });
     await check(120, { units: "s" }, "min", { magnitude: 2 });
     await check(3, { units: "min" }, "s", { magnitude: 180 });
     await check(45, { units: "min" }, "h", { magnitude: 0.75 });
@@ -38,6 +39,9 @@ Deno.test("Quantity conversions", async (t) => {
     await check(7, { units: "day" }, "week", { magnitude: 1 });
     await check(2, { units: "week" }, "day", { magnitude: 14 });
     await check(1, { units: "yr" }, "day", { magnitude: 365 });
+    await check(2, { units: "ka" }, "yr", { magnitude: 2000 });
+    await check(3, { units: "Ma" }, "yr", { magnitude: 3_000_000 });
+    await check(4, { units: "Ga" }, "yr", { magnitude: 4_000_000_000 });
     // Temperature:
     await check(5, { units: "K" }, "deltaC", { magnitude: 5 });
     await check(100, { units: "degF" }, "degC", { magnitude: 37.777777778 });
@@ -62,6 +66,7 @@ Deno.test("Quantity conversions", async (t) => {
     await check(2.5, { units: "kW" }, "HP", { magnitude: 3.352555224 });
     await check(1, { units: "HP" }, "W", { magnitude: 745.699871582 });
     // Volume
+    await check(317, { units: "mL" }, "cm^3", { magnitude: 317 });
     await check(1.5, { units: "L" }, "cm^3", { magnitude: 1500 });
     await check(1234, { units: "cm^3" }, "L", { magnitude: 1.234 });
     // Misc
