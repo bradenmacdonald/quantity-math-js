@@ -56,6 +56,8 @@ Deno.test(`parseUnits() - invalid Strings`, async (t) => {
         ["foo", `Unable to parse the unit "foo"`],
         ["mm^X", `Invalid exponent/power on unit "mm^X"`],
         ["mm^1.5", `Invalid exponent/power on unit "mm^1.5"`],
+        ["mm^5px", `Invalid exponent/power on unit "mm^5px"`],
+        ["mm^0", `Invalid exponent/power on unit "mm^0"`],
         // These units do not support prefixes:
         ["k%", `Unable to parse the unit "k%"`], // kilo-percent
         ["mlb", `Unable to parse the unit "mlb"`], // milli-pound

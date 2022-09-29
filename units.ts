@@ -383,9 +383,9 @@ function parseSingleUnit(
     const caretPos = unitStr.indexOf("^");
     // prefixedUnit: The unit possibly with a prefix, e.g. "km", "m", or "Kibit"
     const prefixedUnit = caretPos === -1 ? unitStr : unitStr.substring(0, caretPos);
-    const power = caretPos === -1 ? 1 : parseInt(unitStr.substring(caretPos + 1, 10));
+    const power = caretPos === -1 ? 1 : Number(unitStr.substring(caretPos + 1));
 
-    if (!power || unitStr.indexOf(".") !== -1) { // If power is 0 or NaN or a float:
+    if (power === 0 || !Number.isInteger(power)) { // If power is 0 or NaN or a float:
         throw new QuantityError(`Invalid exponent/power on unit "${unitStr}"`);
     }
 
@@ -396,13 +396,13 @@ function parseSingleUnit(
         // Try some prefixes:
         const firstLetter = prefixedUnit[0];
         let rest = prefixedUnit.substring(1);
-        if (firstLetter in prefixes && rest in units && units[rest].prefixable) {
+        if (firstLetter in prefixes && units[rest]?.prefixable) {
             // prefixedUnit is a length 1 prefix and unit combined.
             return { prefix: firstLetter as Prefix, unit: rest, power };
         } else {
             const firstTwo = prefixedUnit.substring(0, 2);
             rest = prefixedUnit.substring(2);
-            if (firstTwo in prefixes && rest in units && units[rest].prefixable) {
+            if (firstTwo in prefixes && units[rest]?.prefixable) {
                 // prefixedUnit is a length 2 prefix and unit combined.
                 return { prefix: firstTwo as Prefix, unit: rest, power };
             }
