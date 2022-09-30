@@ -206,7 +206,9 @@ export const builtInUnits = makeUnits(
         // "inH2O": { s: 2.4908891e+2, d: PRSR_DIMENSIONS },
         // "ftHg": { s: 4.0636664e+4, d: PRSR_DIMENSIONS },
         // "ftH2O": { s: 2.98906692e+3, d: PRSR_DIMENSIONS },
+        /** Barye: CGS standard unit for pressure */
         // "Ba": { s: 1e-1, d: PRSR_DIMENSIONS },
+        /** Gauge Pascal: Pascal with a zero offset at atmospheric pressure */
         // "Pa-g": { s: 1e+0, d: PRSR_DIMENSIONS, offset: 1.01325e+5 },
         // "bar-g": { s: 1e+5, d: PRSR_DIMENSIONS, offset: 1.01325e+5 },
         // "psi-g": { s: 6.89475729316836e+3, d: PRSR_DIMENSIONS, offset: 1.01325e+5},
@@ -216,6 +218,7 @@ export const builtInUnits = makeUnits(
         /** Newtons */
         "N": { s: 1e+0, d: new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]), prefixable: true },
         // "dyn": { s: 1e-5, d: new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]) },
+        /** Gram Force: the amount of force exerted by standard gravity on a 1 gram mass */
         // "gf": { s: 9.80665e-3, d: new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]) },
         // "pond": { s: 9.80665e-3, d: new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]) },
         /** Pound Force */
@@ -228,11 +231,15 @@ export const builtInUnits = makeUnits(
 
         /** Joules */
         "J": { s: 1e+0, d: NRGY_DIMENSIONS, prefixable: true },
-        // "eV": { s: 1.602176487e-19, d: NRGY_DIMENSIONS },
+        /** electronvolt */
+        "eV": { s: 1.602176634e-19, d: NRGY_DIMENSIONS, prefixable: true },  // 2019 definition, see https://physics.nist.gov/cgi-bin/cuu/Value?evj or Wikipedia
         // "erg": { s: 1e-7, d: NRGY_DIMENSIONS },
-        // "cal": { s: 4.1868e+0, d: NRGY_DIMENSIONS },
+        /** Calorie */
+        // "cal": { s: 4.1868, d: NRGY_DIMENSIONS },
+        /** Kilo-calorie, commonly called simply "Calorie", used to measure energy in food in the US. */
         // "Cal": { s: 4.1868e+3, d: NRGY_DIMENSIONS },
-        // "BTU": { s: 1.05505585e+3, d: NRGY_DIMENSIONS },
+        /** British Thermal Unit (IT definition). BTU is an ambiguous unit so is not recommended. */
+        "BTU": { s: 1.05505585e+3, d: NRGY_DIMENSIONS },
         // "thm": { s: 1.05505585e+8, d: NRGY_DIMENSIONS },
         "Wh": { s: 3.6e+3, d: NRGY_DIMENSIONS, prefixable: true },
         // "HPh": { s: 2.68451953769617e+6, d: NRGY_DIMENSIONS },
@@ -315,28 +322,41 @@ export const builtInUnits = makeUnits(
         // "word": { s: 1.6e+1, d: INFO_DIMENSIONS },
         // "dword": { s: 3.2e+1, d: INFO_DIMENSIONS },
 
+        // Electromagnetism
+
         // "baud": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 1]) },
-        // "A": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 1, 0, 0, 0]), prefixable: true },
-        // "C": { s: 1e+0, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]) },
-        // "Ah": { s: 3.6e+3, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]) },
+        /** Ampere: SI standard unit for electric current, equal to 1 C/s */
+        "A": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 1, 0, 0, 0]), prefixable: true },
+        /** Coulomb: SI standard unit for electric charge */
+        "C": { s: 1e+0, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]), prefixable: true },
+        /** Amp Hour: Charge collected from 1 Amp over 1 hour */
+        "Ah": { s: 3.6e+3, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]), prefixable: true },
         // "e": { s: 1.602176634e-19, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]) },
-        // "V": { s: 1e+0, d: new Dimensions([1, 2, -3, 0, -1, 0, 0, 0]) },
-        // "ohm": { s: 1e+0, d: new Dimensions([1, 2, -3, 0, -2, 0, 0, 0]) },
-        // "F": { s: 1e+0, d: new Dimensions([-1, -2, 4, 0, 2, 0, 0, 0]) },
-        // "H": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -2, 0, 0, 0]) },
-        // "S": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0]) },
+        /** Volt */
+        "V": { s: 1, d: new Dimensions([1, 2, -3, 0, -1, 0, 0, 0]) },
+        /** Ohm/Ω: Derived SI unit for electrical resistance */
+        "ohm": { s: 1, d: new Dimensions([1, 2, -3, 0, -2, 0, 0, 0]) },
+        /** Farad: Derived SI unit of electrical capacitance */
+        "F": { s: 1e+0, d: new Dimensions([-1, -2, 4, 0, 2, 0, 0, 0]) },
+        /** Henry: Derived SI unit for inductance */
+        "H": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -2, 0, 0, 0]) },
+        /** Siemens: Derived SI unit for electrical conductance, equal to 1 / ohm */
+        "S": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0]) },
         // "mho": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0]) },
-        // "Wb": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0]) },
+        /** Weber: SI unit for magnetic flux defined as 1 kg m^2 / (s^2 A) */
+        "Wb": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0]) },
         // "Mx": { s: 1e-8, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0]) },
-        // "T": { s: 1e+0, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0]) },
+        /** Tesla: SI unit for magnetic flux density defined as 1 Wb / m^2 */
+        "T": { s: 1e+0, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0]) },
         // "Gs": { s: 1e-4, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0]) },
         // "gs": { s: 1e-4, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0]) },
         // "Fr": { s: 3.3356409519815207e-10, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]) },
         // "Gi": { s: 7.957747e-1, d: new Dimensions([0, 0, 0, 0, 1, 0, 0, 0]) },
         // "Oe": { s: 7.957747154594767e+1, d: new Dimensions([0, -1, 0, 0, 1, 0, 0, 0]) },
-        // "mol": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 0, 1, 0, 0]) },
-        // "molar": { s: 1e+3, d: new Dimensions([0, -3, 0, 0, 0, 1, 0, 0]) },
-        // "M": { s: 1e+3, d: new Dimensions([0, -3, 0, 0, 0, 1, 0, 0]) },
+        /** Mole: SI standard unit for an amount of substance, defined as exactly 6.02214076e23 elementary entities (usually molecules) */
+        "mol": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 0, 1, 0, 0]) },
+        /** Molar Concentration: Amount of substance per Liter of solution */
+        "M": { s: 1e+3, d: new Dimensions([0, -3, 0, 0, 0, 1, 0, 0]) },
         // "kat": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 1, 0, 0]) },
         // "U": { s: 1.6666666666666667e-8, d: new Dimensions([0, 0, -1, 0, 0, 1, 0, 0]) },
         // "cd": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 0, 0, 1, 0]) },
@@ -359,8 +379,12 @@ export const builtInUnits = makeUnits(
         // "deg": { s: 1.7453292519943295e-2, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0]) },
         // "arcmin": { s: 2.908882086657216e-4, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0]) },
         // "arcsec": { s: 4.84813681109536e-6, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0]) },
-        // "rpm": { s: 1.0471975511965977e-1, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
-        // "Hz": { s: 6.283185307179586e+0, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
+        /** If the non-SI unit rpm is considered a unit of angular velocity and the word "revolution" is considered to mean 2π radians, then 1 rpm = 2π/60 rad/s */
+        // "rpm" : {s: 1.0471975511965977e-1, "d": new Dimensions([0,0,-1,0,0,0,0,0])},
+        /** If the non-SI unit rpm is considered a unit of frequency, then 1 rpm = 1/60 Hz (Wikipedia) */
+        // "rpm": { s: 1/60, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
+        /** Hertz: Frequency defined as 1 (cycle or rotation) / sec */
+        "Hz": { s: 1, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
         // "Bq": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
         // "Gy": { s: 1e+0, d: new Dimensions([0, 2, -2, 0, 0, 0, 0, 0]) },
         // "Sv": { s: 1e+0, d: new Dimensions([0, 2, -2, 0, 0, 0, 0, 0]) },

@@ -65,9 +65,13 @@ Deno.test("Quantity conversions", async (t) => {
     await check(1234, { units: "N" }, "g⋅m/s^2", { magnitude: 1234000 });
     // Energy
     await check(-17, { units: "N⋅m" }, "J", { magnitude: -17 });
+    // For eV we have to check without rounding:
+    const eV = new Quantity(1, { units: "eV" });
+    assertEquals(eV.getWithUnits("J"), { magnitude: 1.602176634e-19, units: "J" });
     await check(3.68, { units: "W⋅s" }, "J", { magnitude: 3.68 });
     await check(1, { units: "kWh" }, "MJ", { magnitude: 3.6 });
     await check(7.2, { units: "MJ" }, "kWh", { magnitude: 2 });
+    await check(1, { units: "BTU" }, "J", { magnitude: 1055.05585 });
     // Power
     await check(2.5, { units: "kW" }, "HP", { magnitude: 3.352555224 });
     await check(1, { units: "HP" }, "W", { magnitude: 745.699871582 });
@@ -91,7 +95,22 @@ Deno.test("Quantity conversions", async (t) => {
     await check(1, { units: "EiB" }, "PiB", { magnitude: 1024 });
     await check(1, { units: "ZiB" }, "EiB", { magnitude: 1024 });
     await check(1, { units: "YiB" }, "ZiB", { magnitude: 1024 });
+
+    // Electromagnetism
+    await check(1, { units: "A" }, "C/s", { magnitude: 1 }); // 1 Ampere is 1 C/s
+    await check(1, { units: "C" }, "A⋅s", { magnitude: 1 });
+    await check(1, { units: "mAh" }, "mA⋅h", { magnitude: 1 }); // amp hour
+    await check(1, { units: "Ah" }, "C", { magnitude: 3600 });
+    await check(1, { units: "V" }, "kg⋅m^2 / A⋅s^3", { magnitude: 1 });
+    await check(1, { units: "ohm" }, "kg⋅m^2 / A^2⋅s^3", { magnitude: 1 });
+    await check(1, { units: "F" }, "s^4⋅A^2 / kg^1⋅m^2", { magnitude: 1 });
+    await check(1, { units: "H" }, "kg⋅m^2 / s^2⋅A^2", { magnitude: 1 });
+    await check(1, { units: "S" }, "ohm^-1", { magnitude: 1 });
+    await check(1, { units: "Wb" }, "kg⋅m^2 / s^2⋅A^1", { magnitude: 1 });
+    await check(1, { units: "T" }, "Wb / m^2", { magnitude: 1 });
     // Misc
+    await check(1, { units: "M" }, "mol / L", { magnitude: 1 }); // molar concentration
+    await check(1, { units: "Hz" }, "s^-1", { magnitude: 1 }); // Hertz
 
     await t.step("invalid conversions", () => {
         assertThrows(
