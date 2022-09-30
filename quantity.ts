@@ -1,6 +1,6 @@
 import { Dimensionless, Dimensions } from "./dimensions.ts";
 import { QuantityError } from "./error.ts";
-import { builtInUnits, parseUnits, prefixes } from "./units.ts";
+import { builtInUnits, ParsedUnit, parseUnits, prefixes, toUnitString, Unit } from "./units.ts";
 
 export interface SerializedQuantity {
     magnitude: number;
@@ -103,6 +103,7 @@ export class Quantity {
         return r;
     }
 
+    /** Get the value of this (as a SerializedQuantity) using the specified units. */
     public getWithUnits(units: string): SerializedQuantity {
         const converter = new Quantity(1, { units });
         if (!converter.sameDimensionsAs(this)) {
@@ -124,6 +125,113 @@ export class Quantity {
             result.plusMinus = this.plusMinus / converter.magnitude;
         }
         return result;
+    }
+
+    /** Get the most compact SI representation for this quantity.  */
+    public getSI(): SerializedQuantity {
+        const unitList = this.pickUnitsFromList([
+            // Base units:
+            { unit: "g", prefix: "k" },
+            { unit: "m" },
+            { unit: "s" },
+            { unit: "K" },
+            { unit: "A" },
+            { unit: "mol" },
+            // {unit: "cd"},
+            { unit: "b" },
+            // Derived units:
+            { unit: "Hz" },
+            { unit: "N" },
+            { unit: "Pa" },
+            { unit: "J" },
+            { unit: "W" },
+            { unit: "C" },
+            { unit: "V" },
+            { unit: "F" },
+            { unit: "ohm" },
+            { unit: "S" },
+            { unit: "Wb" },
+            { unit: "T" },
+            { unit: "H" },
+            // {unit: "lm"},
+            // {unit: "lx"},
+            // {unit: "Bq"},
+            // {unit: "Gy"},
+        ]);
+        const unitStr = toUnitString(unitList);
+        return this.getWithUnits(unitStr);
+    }
+
+    /**
+     * Internal method: given a list of possible units, pick the most compact subset
+     * that can be used to represent this quantity.
+     */
+    protected pickUnitsFromList(unitList: Omit<ParsedUnit, "power">[]): ParsedUnit[] {
+        const allUnits: Record<string, Unit> = builtInUnits;
+
+        // Convert unitList to a dimension Array
+        const unitArray: Dimensions[] = unitList.map((u) => {
+            const d = allUnits[u.unit]?.d;
+            if (d === undefined) throw new QuantityError(`Unknown unit "${u.unit}"`);
+            return d;
+        });
+        // Loop through each dimension and create a list of unit list indexes that
+        // are the best match for the dimension
+        const useUnits: number[] = [];
+        const useUnitsPower: number[] = [];
+        let remainder = this._dimensions.dimensions.reduce<number>((sum, d) => sum + Math.abs(d ?? 0), 0);
+        let remainderArray = [...this._dimensions.dimensions];
+        while (remainder > 0) {
+            let bestIdx = -1;
+            let bestInv = 0;
+            let bestRemainder = remainder;
+
+            const TEMP_NUM_DIMENSIONS = 8;
+
+            let bestRemainderArray = new Array(TEMP_NUM_DIMENSIONS);
+            for (let unitIdx = 0; unitIdx < unitList.length; unitIdx++) {
+                for (let isInv = -1; isInv <= 1; isInv += 2) {
+                    let newRemainder = 0;
+                    const newRemainderArray = new Array(TEMP_NUM_DIMENSIONS);
+                    for (let dimIdx = 0; dimIdx < TEMP_NUM_DIMENSIONS; dimIdx++) {
+                        newRemainderArray[dimIdx] = remainderArray[dimIdx]! -
+                            (isInv * unitArray[unitIdx].dimensions[dimIdx]!);
+                        newRemainder += Math.abs(newRemainderArray[dimIdx]);
+                    }
+                    if (newRemainder < bestRemainder) {
+                        bestIdx = unitIdx;
+                        bestInv = isInv;
+                        bestRemainder = newRemainder;
+                        bestRemainderArray = newRemainderArray;
+                    }
+                }
+            }
+            // Check to make sure that progress is being made towards remainder = 0
+            // if no more progress is being made then the provided units don't span
+            // this unit, throw an error.
+            if (bestRemainder >= remainder) {
+                throw new QuantityError(`Cannot represent this quantity with the supplied units`);
+            }
+            // Check if the new best unit already in the set of numerator or
+            // denominator units. If it is, increase the power of that unit, if it
+            // is not, then add it.
+            const existingIdx = useUnits.indexOf(bestIdx);
+            if (existingIdx == -1) {
+                useUnits.push(bestIdx);
+                useUnitsPower.push(bestInv);
+            } else {
+                useUnitsPower[existingIdx] += bestInv;
+            }
+            remainder = bestRemainder;
+            remainderArray = bestRemainderArray;
+        }
+
+        // At this point the units to be used are in useUnits
+        return useUnits.map((i, pi) => ({
+            unit: unitList[i].unit,
+            prefix: unitList[i].prefix,
+            power: useUnitsPower[pi],
+        }));
     }
 
     protected _clone(): Quantity {

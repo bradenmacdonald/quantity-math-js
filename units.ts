@@ -36,7 +36,7 @@ export const prefixes = Object.freeze({
 
 type Prefix = keyof typeof prefixes;
 
-interface Unit {
+export interface Unit {
     /** Scale */
     readonly s: number;
     /** Dimensions */
@@ -232,7 +232,7 @@ export const builtInUnits = makeUnits(
         /** Joules */
         "J": { s: 1e+0, d: NRGY_DIMENSIONS, prefixable: true },
         /** electronvolt */
-        "eV": { s: 1.602176634e-19, d: NRGY_DIMENSIONS, prefixable: true },  // 2019 definition, see https://physics.nist.gov/cgi-bin/cuu/Value?evj or Wikipedia
+        "eV": { s: 1.602176634e-19, d: NRGY_DIMENSIONS, prefixable: true }, // 2019 definition, see https://physics.nist.gov/cgi-bin/cuu/Value?evj or Wikipedia
         // "erg": { s: 1e-7, d: NRGY_DIMENSIONS },
         /** Calorie */
         // "cal": { s: 4.1868, d: NRGY_DIMENSIONS },
@@ -485,4 +485,23 @@ export function parseUnits(
     } else {
         return numeratorParts;
     }
+}
+
+/**
+ * Convert a parsed unit array, e.g. from parseUnits(), back to a string like "kg⋅m/s^2"
+ */
+export function toUnitString(units: ParsedUnit[]): string {
+    const numerator: string[] = [];
+    const denominator: string[] = [];
+    for (const u of units) {
+        if (u.power > 0) {
+            numerator.push((u.prefix ?? "") + u.unit + (u.power !== 1 ? `^${u.power}` : ""));
+        } else {
+            denominator.push((u.prefix ?? "") + u.unit + (u.power !== -1 ? `^${(u.power * -1)}` : ""));
+        }
+    }
+    if (denominator.length) {
+        return numerator.join("⋅") + "/" + denominator.join("⋅");
+    }
+    return numerator.join("⋅");
 }
