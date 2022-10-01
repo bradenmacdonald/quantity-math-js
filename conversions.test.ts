@@ -172,7 +172,7 @@ Deno.test("Conversions to SI", async (t) => {
     await checkSI(5, { units: "kg^2⋅m^2⋅s^-4⋅A^-2" }, { magnitude: 5, units: "kg/F" });
     await checkSI(5, { units: "C⋅K⋅Ah" }, { magnitude: 18000, units: "C^2⋅K" });
     await checkSI(5, { units: "W⋅s^2" }, { magnitude: 5, units: "J⋅s" });
-    await checkSI(5, { units: "C⋅A⋅s^2/kg⋅m^2" }, { magnitude: 5, units: "ohm^-1" });
+    await checkSI(5, { units: "C⋅A⋅s^2/kg⋅m^2" }, { magnitude: 5, units: "S" });
     await checkSI(5, { units: "ft⋅lb" }, { magnitude: 0.691274772, units: "kg⋅m" });
     // Complex units that can't be simplified
     await checkSI(5, { units: "V⋅kg^3⋅b^2⋅K^4⋅mol" }, { magnitude: 5, units: "V⋅kg^3⋅K^4⋅mol⋅b^2" });

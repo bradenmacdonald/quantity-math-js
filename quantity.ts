@@ -198,7 +198,12 @@ export class Quantity {
                             (isInv * unitArray[unitIdx].dimensions[dimIdx]!);
                         newRemainder += Math.abs(newRemainderArray[dimIdx]);
                     }
-                    if (newRemainder < bestRemainder) {
+                    // If this unit reduces the dimensionality more than the best candidate unit yet found,
+                    // or reduces the dimensionality by the same amount but is in the numerator rather than denominator:
+                    if (
+                        (newRemainder < bestRemainder) ||
+                        (newRemainder === bestRemainder && isInv === 1 && bestInv === -1)
+                    ) {
                         bestIdx = unitIdx;
                         bestInv = isInv;
                         bestRemainder = newRemainder;
