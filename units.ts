@@ -359,8 +359,11 @@ export const builtInUnits = makeUnits(
         "M": { s: 1e+3, d: new Dimensions([0, -3, 0, 0, 0, 1, 0, 0]) },
         // "kat": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 1, 0, 0]) },
         // "U": { s: 1.6666666666666667e-8, d: new Dimensions([0, 0, -1, 0, 0, 1, 0, 0]) },
+        /** Candela */
         // "cd": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 0, 0, 1, 0]) },
+        /** Lumen */
         // "lm": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 0, 0, 1, 0]) },
+        /** Lux */
         // "lx": { s: 1e+0, d: new Dimensions([0, -2, 0, 0, 0, 0, 1, 0]) },
         // "footcandle": {
         //     "s": 1.0763910416709722e+1,
@@ -501,7 +504,12 @@ export function toUnitString(units: ParsedUnit[]): string {
         }
     }
     if (denominator.length) {
-        return numerator.join("⋅") + "/" + denominator.join("⋅");
+        if (numerator.length) {
+            return numerator.join("⋅") + "/" + denominator.join("⋅");
+        } else {
+            // Special rare case: If there's no numerator, just invert the denominator powers.
+            return units.map((u) => (u.prefix ?? "") + u.unit + `^${u.power}`).join("⋅");
+        }
     }
     return numerator.join("⋅");
 }

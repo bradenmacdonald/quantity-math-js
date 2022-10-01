@@ -154,8 +154,12 @@ Deno.test("Conversions to SI", async (t) => {
     await checkSI(15, { units: "%" }, { magnitude: 0.15, units: "" });
     await checkSI(300, { units: "ppm" }, { magnitude: 300e-6, units: "" });
     // With simple SI units:
+    await checkSI(10, { units: "s" }, { magnitude: 10, units: "s" });
+    await checkSI(10, { units: "s^-1" }, { magnitude: 10, units: "s^-1" }); // Note we always prefer s^1 to Hz
+    await checkSI(10, { units: "Hz" }, { magnitude: 10, units: "s^-1" }); // Note we always prefer s^1 to Hz
     await checkSI(1, { units: "cm" }, { magnitude: 0.01, units: "m" });
     await checkSI(1234, { units: "kg⋅m/s^2" }, { magnitude: 1234, units: "N" });
+    await checkSI(1234, { units: "s^2/kg⋅m" }, { magnitude: 1234, units: "N^-1" });
     await checkSI(36, { units: "km/h" }, { magnitude: 10, units: "m/s" });
     await checkSI(30, { units: "degC" }, { magnitude: 303.15, units: "K" });
     await checkSI(70, { units: "degF" }, { magnitude: 294.261111111, units: "K" });
@@ -164,11 +168,12 @@ Deno.test("Conversions to SI", async (t) => {
     await checkSI(100, { units: "BTU" }, { magnitude: 105505.585, units: "J" });
     await checkSI(60, { units: "psi" }, { magnitude: 413685.437590102, units: "Pa" });
     await checkSI(10, { units: "ft" }, { magnitude: 3.048, units: "m" });
+    await checkSI(5, { units: "kg⋅m^2⋅s^-2⋅A^-3" }, { magnitude: 5, units: "H/A" });
+    await checkSI(5, { units: "kg^2⋅m^2⋅s^-4⋅A^-2" }, { magnitude: 5, units: "kg/F" });
+    await checkSI(5, { units: "C⋅K⋅Ah" }, { magnitude: 18000, units: "C^2⋅K" });
+    await checkSI(5, { units: "W⋅s^2" }, { magnitude: 5, units: "J⋅s" });
+    await checkSI(5, { units: "C⋅A⋅s^2/kg⋅m^2" }, { magnitude: 5, units: "ohm^-1" });
+    await checkSI(5, { units: "ft⋅lb" }, { magnitude: 0.691274772, units: "kg⋅m" });
     // Complex units that can't be simplified
-    await checkSI(5, { units: "V⋅kg" }, { magnitude: 5, units: "V⋅kg" });
-    await checkSI(5, { units: "V⋅kg^3" }, { magnitude: 5, units: "V⋅kg^3" });
-    await checkSI(5, { units: "V⋅kg^3⋅b" }, { magnitude: 5, units: "V⋅kg^3⋅b" });
-    await checkSI(5, { units: "V⋅kg^3⋅b^2" }, { magnitude: 5, units: "V⋅kg^3⋅b^2" });
-    await checkSI(5, { units: "V⋅kg^3⋅b⋅K^4" }, { magnitude: 5, units: "V⋅kg^3⋅K^4⋅b" });
     await checkSI(5, { units: "V⋅kg^3⋅b^2⋅K^4⋅mol" }, { magnitude: 5, units: "V⋅kg^3⋅K^4⋅mol⋅b^2" });
 });
