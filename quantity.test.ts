@@ -193,7 +193,15 @@ Deno.test("Adding quantities", async (t) => {
         const z = x.add(y);
         assertEquals(z.magnitude, 5.5);
         assertEquals(z.dimensions, ONE_MASS_DIMENSION);
-        assertEquals(z, y.add(x));
+        assertEquals(z.toString(), "5.5 kg");
+    });
+    await t.step(`(500 g) + (5 kg)`, () => {
+        const x = new Quantity(500, { units: "g" });
+        const y = new Quantity(5, { units: "kg" });
+        const z = x.add(y);
+        assertEquals(z.magnitude, 5.5);
+        assertEquals(z.dimensions, ONE_MASS_DIMENSION);
+        assertEquals(z.toString(), "5500 g");
     });
     await t.step(`(5 kg) + (-500 g)`, () => {
         const x = new Quantity(5, { units: "kg" });
@@ -201,7 +209,6 @@ Deno.test("Adding quantities", async (t) => {
         const z = x.add(y);
         assertEquals(z.magnitude, 4.5);
         assertEquals(z.dimensions, ONE_MASS_DIMENSION);
-        assertEquals(z, y.add(x));
     });
 
     // Adding temperatures:
@@ -245,6 +252,30 @@ Deno.test("Multiplying quantities", async (t) => {
         assertEquals(z.magnitude, 1.0);
         assertEquals(z.dimensions, FORCE_DIMENSIONS);
     });
+    await t.step(`(5 ft) * (3 ft) - preserves unit`, () => {
+        const x = new Quantity(5, { units: "ft" });
+        const y = new Quantity(3, { units: "ft" });
+        const z = x.multiply(y);
+        assertEquals(z.toString(), "15 ft^2");
+    });
+    await t.step(`(5 ft) * (36 in) - preserves first unit`, () => {
+        const x = new Quantity(5, { units: "ft" });
+        const y = new Quantity(36, { units: "in" });
+        // Due to binary floating point issues, we don't get exactly 15. But the key point is the units are "ft^2"
+        assertEquals(x.multiply(y).get(), { magnitude: 14.999999999999998, units: "ft^2" });
+    });
+    await t.step(`(36 in) * (5 ft) - preserves first unit`, () => {
+        const x = new Quantity(36, { units: "in" });
+        const y = new Quantity(5, { units: "ft" });
+        // Now the units are "in^2"
+        assertEquals(x.multiply(y).toString(), "2160 in^2");
+    });
+    await t.step(`(5 ft) * (4 lb) - preserves combined unit`, () => {
+        const x = new Quantity(5, { units: "ft" });
+        const y = new Quantity(4, { units: "lb" });
+        const z = x.multiply(y);
+        assertEquals(z.toString(), "20 ft⋅lb");
+    });
 });
 
 Deno.test("Uncertainty/tolerance", async (t) => {
@@ -252,7 +283,48 @@ Deno.test("Uncertainty/tolerance", async (t) => {
         const x = new Quantity(5, { units: "m", plusMinus: 0.02 });
         assertEquals(x.magnitude, 5);
         assertEquals(x.plusMinus, 0.02);
-        // assertEquals(x.toString(), "5±0.02 m"); // TODO: uncomment this.
+        assertEquals(x.toString(), "5±0.02 m");
+    });
+
+    await t.step(
+        `uncertainty/tolerance is stored with full precision but toString() will print it to 1 sig fig unless it starts with '1' in which case two sig figs.`,
+        async (t) => {
+            // We use two sig figs for numbers starting with '1' because of https://physics.stackexchange.com/a/520937
+            await t.step(`starts with 1`, () => {
+                const x = new Quantity(500, { units: "m", plusMinus: 1.2345 });
+                assertEquals(x.plusMinus, 1.2345);
+                assertEquals(x.toString(), "500±1.2 m");
+            });
+            await t.step(`starts with 1`, () => {
+                const x = new Quantity(2800, { units: "m", plusMinus: 12.315 });
+                assertEquals(x.plusMinus, 12.315);
+                assertEquals(x.toString(), "2800±12 m");
+            });
+            await t.step(`starts with 2`, () => {
+                const x = new Quantity(515, { units: "m", plusMinus: 2.345 });
+                assertEquals(x.plusMinus, 2.345);
+                assertEquals(x.toString(), "515±2 m");
+            });
+            await t.step(`starts with 2`, () => {
+                const x = new Quantity(0.381207, { units: "m", plusMinus: 0.000025 });
+                assertEquals(x.plusMinus, 0.000025);
+                assertEquals(x.toString(), "0.38121±0.00003 m"); // Notice the magnitude is rounded to match the uncertainty/error/tolerance
+            });
+        },
+    );
+
+    await t.step(`when adding two quantities, the error is added.`, () => {
+        // x = (4.52 ± 0.02) cm, y = (2.0 ± 0.2) cm, w = (3.0 ± 0.6) cm
+        // Then z = x + y - z = 0.5 ± 0.82 cm² which rounds to 0.5 ± 0.8 cm
+        const x = new Quantity(4.52, { units: "cm", plusMinus: 0.02 });
+        const y = new Quantity(2.0, { units: "cm", plusMinus: 0.2 });
+        const w = new Quantity(3.0, { units: "cm", plusMinus: 0.6 });
+        const z = x.add(y).sub(w);
+        // The results are always stored with full precision:
+        assertEquals(z.magnitude, 3.5199999999999995e-2); // in m
+        assertEquals(z.plusMinus, 0.82e-2);
+        // But toString() will round them by default, using the plusMinus value:
+        assertEquals(z.toString(), "3.5±0.8 cm");
     });
 
     await t.step(`when multiplying two quantities, the relative error is added.`, () => {
@@ -261,8 +333,10 @@ Deno.test("Uncertainty/tolerance", async (t) => {
         const x = new Quantity(4.52, { units: "cm", plusMinus: 0.02 });
         const y = new Quantity(2.0, { units: "cm", plusMinus: 0.2 });
         const z = x.multiply(y);
-        assertEquals(z.magnitude, 9.04e-4);
+        // The results are always stored with full precision:
+        assertEquals(z.magnitude, 9.04e-4); // in m
         assertEquals(z.plusMinus, 0.944e-4);
-        // assertEquals(z.toString(), "9.0±0.9 cm²"); // TODO: uncomment this.
+        // But toString() will round them by default, using the plusMinus value:
+        assertEquals(z.toString(), "9.0±0.9 cm^2");
     });
 });

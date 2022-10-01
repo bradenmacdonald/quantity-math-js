@@ -9,6 +9,9 @@ export interface SerializedQuantity {
     units: string;
 }
 
+// Private constructor parameter to pass '_unitHintSet' values.
+const setUnitHintSet = Symbol("unitHintSet");
+
 export class Quantity {
     public get magnitude() {
         return this._magnitude;
@@ -22,19 +25,32 @@ export class Quantity {
         return this._plusMinus;
     }
     protected _plusMinus: number | undefined;
+    /**
+     * For a few units like "degC", "degF", and "gauge Pascals", we need to keep track of their offset from
+     * the base units. (e.g. 0C = 273.15K). This is ONLY used within getWithUnits() and this field does not
+     * need to be preserved when cloning a Quantity or doing math with Quantities, because the offset is
+     * already applied within the constructor, which converts everything to non-offset base units.
+     */
     protected readonly _offsetUsed: number | undefined;
+    /**
+     * Units that were used when constructing or deriving this Quantity (if known), to use by default when serializing it.
+     * The 'power' values of this are always ignored and may be omitted - only the prefixes and units are used.
+     */
+    protected _unitHintSet: ParsedUnit[] | undefined;
 
     constructor(
         protected _magnitude: number,
         options: {
             dimensions?: Dimensions;
-            units?: string;
+            units?: string | ParsedUnit[];
             /**
              * If set, only this many of the decimal digits of 'magnitude' are significant.
              */
             significantFigures?: number;
             /** Allowed tolerance or uncertainty in this measurement */
             plusMinus?: number;
+            /** Internal use only - set the _unitHintSet on this newly constructed Quantity */
+            [setUnitHintSet]?: ParsedUnit[];
         } = {},
     ) {
         this.significantFigures = options.significantFigures;
@@ -43,7 +59,8 @@ export class Quantity {
             if (options.dimensions) {
                 throw new QuantityError(`You can specify units or dimensions, but not both.`);
             }
-            const units = parseUnits(options.units);
+            const units: ParsedUnit[] = typeof options.units === "string" ? parseUnits(options.units) : options.units;
+            this._unitHintSet = units;
             this._dimensions = Dimensionless;
             for (const u of units) {
                 const unitData = builtInUnits[u.unit as keyof typeof builtInUnits];
@@ -65,6 +82,7 @@ export class Quantity {
             }
         } else if (options.dimensions) {
             this._dimensions = options.dimensions;
+            this._unitHintSet = options[setUnitHintSet];
         } else {
             this._dimensions = Dimensionless;
         }
@@ -91,20 +109,46 @@ export class Quantity {
     }
 
     toString(): string {
-        let r = this.significantFigures === undefined
-            ? this.magnitude.toString(10)
-            : this.magnitude.toPrecision(this.significantFigures);
-        if (this.plusMinus) {
-            r += "±" + this.plusMinus.toString(10);
+        const serialized = this.get();
+        let r = serialized.significantFigures === undefined
+            ? serialized.magnitude.toString(10)
+            : serialized.magnitude.toPrecision(serialized.significantFigures);
+        if (serialized.plusMinus) {
+            let plusMinusString = serialized.plusMinus.toPrecision(2);
+            for (let i = 0; i < plusMinusString.length; i++) {
+                if (plusMinusString[i] === "0" || plusMinusString[i] === ".") {
+                    continue;
+                } else if (plusMinusString[i] === "1") {
+                    // The uncertainty/error/tolerance starts with 1, so we follow
+                    // an arbitrary rule to print it with two significant figures.
+                    // See https://physics.stackexchange.com/a/520937 for why we do this.
+                    break;
+                } else {
+                    // The uncertainty/error/tolerance should be printed to one
+                    // significant figure, as it doesn't start with "1"
+                    plusMinusString = serialized.plusMinus.toPrecision(1);
+                }
+            }
+            if (!serialized.significantFigures) {
+                // Also, we need to trim the magnitude so that it doesn't have any more decimal places than
+                // the uncertainty/error/tolerance has. (Unless an explicit "significantFigures" value was given.)
+                const countDecimalPlaces = (str: string) => str.includes(".") ? str.length - str.indexOf(".") + 1 : 0;
+                const numPlusMinusDecimalPlaces = countDecimalPlaces(plusMinusString);
+                let precision = r.length;
+                while (countDecimalPlaces(r) > numPlusMinusDecimalPlaces) {
+                    r = serialized.magnitude.toPrecision(--precision);
+                }
+            }
+            r += "±" + plusMinusString;
         }
         if (!this.isDimensionless) {
-            // TODO: print the units as a string, separated by ⋅ or /
+            r += " " + serialized.units;
         }
         return r;
     }
 
     /** Get the value of this (as a SerializedQuantity) using the specified units. */
-    public getWithUnits(units: string): SerializedQuantity {
+    public getWithUnits(units: string | ParsedUnit[]): SerializedQuantity {
         const converter = new Quantity(1, { units });
         if (!converter.sameDimensionsAs(this)) {
             throw new QuantityError("Cannot convert units that aren't compatible.");
@@ -116,7 +160,7 @@ export class Quantity {
         }
         const result: SerializedQuantity = {
             magnitude: (this._magnitude - (converter._offsetUsed ?? 0)) / converter._magnitude,
-            units,
+            units: typeof units === "string" ? units : toUnitString(units),
         };
         if (this.significantFigures) {
             result.significantFigures = this.significantFigures;
@@ -125,6 +169,16 @@ export class Quantity {
             result.plusMinus = this.plusMinus / converter.magnitude;
         }
         return result;
+    }
+
+    /** Get the details of this quantity, using the original unit representation if possible.  */
+    public get(): SerializedQuantity {
+        if (this._unitHintSet) {
+            const unitsToUse = this.pickUnitsFromList(this._unitHintSet);
+            return this.getWithUnits(unitsToUse);
+        }
+        // Fall back to SI units if we can't use the units in the "hint set".
+        return this.getSI();
     }
 
     /** Get the most compact SI representation for this quantity.  */
@@ -140,7 +194,6 @@ export class Quantity {
             // {unit: "cd"},
             { unit: "b" },
             // Derived units:
-            { unit: "Hz" },
             { unit: "N" },
             { unit: "Pa" },
             { unit: "J" },
@@ -158,8 +211,7 @@ export class Quantity {
             // {unit: "Bq"},
             // {unit: "Gy"},
         ]);
-        const unitStr = toUnitString(unitList);
-        return this.getWithUnits(unitStr);
+        return this.getWithUnits(unitList);
     }
 
     /**
@@ -240,12 +292,34 @@ export class Quantity {
         }));
     }
 
+    /**
+     * Clone this Quantity. This is an internal method, because as far as the public API allows,
+     * Quantity objects are immutable, so there is no need to use this API publicly.
+     */
     protected _clone(): Quantity {
         return new Quantity(this._magnitude, {
             dimensions: this._dimensions,
             plusMinus: this._plusMinus,
             significantFigures: this.significantFigures,
+            [setUnitHintSet]: this._unitHintSet,
         });
+    }
+
+    /**
+     * Internal helper method: when doing a mathematical operation involving two Quantities, use this to combine their
+     * "unit hints" so that the resulting Quantity object will "remember" the preferred unit for the result.
+     */
+    protected static combineUnitHints(
+        h1: ParsedUnit[] | undefined,
+        h2: ParsedUnit[] | undefined,
+    ): ParsedUnit[] | undefined {
+        const unitHintSet: ParsedUnit[] = [];
+        for (const u of (h1 ?? []).concat(h2 ?? [])) {
+            if (!unitHintSet.find((eu) => eu.unit === u.unit)) {
+                unitHintSet.push(u);
+            }
+        }
+        return unitHintSet.length ? unitHintSet : undefined;
     }
 
     /** Add this to another Quantity, returning the result as a new Quantity object */
@@ -273,7 +347,16 @@ export class Quantity {
             dimensions: this._dimensions,
             plusMinus,
             significantFigures,
+            // Preserve the "unit hints" so that the new Quantity will remember what units were used:
+            [setUnitHintSet]: Quantity.combineUnitHints(this._unitHintSet, y._unitHintSet),
         });
+    }
+
+    /** Subtract another Quantity from this, returning the result as a new Quantity object */
+    public sub(y: Quantity): Quantity {
+        const tempQ = y._clone();
+        tempQ._magnitude = 0 - tempQ._magnitude;
+        return this.add(tempQ);
     }
 
     /** Modify this Quantity in-place by multiplying it with another quantity. */
@@ -306,6 +389,8 @@ export class Quantity {
 
         // Multiply the magnitude:
         this._magnitude *= y._magnitude;
+        // Add in the additional unit hints, if applicable:
+        this._unitHintSet = Quantity.combineUnitHints(this._unitHintSet, y._unitHintSet);
     }
 
     /** Multiply this Quantity by another Quantity and return the new result */
