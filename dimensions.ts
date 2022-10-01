@@ -9,6 +9,8 @@ import { QuantityError } from "./error.ts";
  */
 const numBasicDimensions = 8;
 
+// TODO: add an angle dimension, like Boost and Mathematica do.
+
 export class Dimensions {
     constructor(
         public readonly dimensions: [
