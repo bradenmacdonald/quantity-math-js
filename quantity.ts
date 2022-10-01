@@ -190,7 +190,7 @@ export class Quantity {
 
             let bestRemainderArray = new Array(TEMP_NUM_DIMENSIONS);
             for (let unitIdx = 0; unitIdx < unitList.length; unitIdx++) {
-                for (let isInv = -1; isInv <= 1; isInv += 2) {
+                for (let isInv = 1; isInv >= -1; isInv -= 2) {
                     let newRemainder = 0;
                     const newRemainderArray = new Array(TEMP_NUM_DIMENSIONS);
                     for (let dimIdx = 0; dimIdx < TEMP_NUM_DIMENSIONS; dimIdx++) {
@@ -208,6 +208,7 @@ export class Quantity {
                         bestInv = isInv;
                         bestRemainder = newRemainder;
                         bestRemainderArray = newRemainderArray;
+                        break; // Tiny optimization: if this unit is better than bestRemainder, we don't need to check its inverse
                     }
                 }
             }
