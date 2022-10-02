@@ -1,7 +1,5 @@
 import { assert, assertEquals, assertFalse, assertNotEquals, assertThrows } from "./asserts.test.ts";
-import { Dimensions } from "./dimensions.ts";
-import { QuantityError } from "./error.ts";
-import { Quantity } from "./quantity.ts";
+import { Dimensions, Quantity, QuantityError } from "../mod.ts";
 
 const ONE_MASS_DIMENSION = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]);
 const ONE_LENGTH_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]);

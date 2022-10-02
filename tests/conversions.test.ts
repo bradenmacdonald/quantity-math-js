@@ -1,6 +1,5 @@
 import { assertEquals, assertThrows } from "./asserts.test.ts";
-import { QuantityError } from "./error.ts";
-import { Quantity, SerializedQuantity } from "./quantity.ts";
+import { Quantity, QuantityError, SerializedQuantity } from "../mod.ts";
 
 Deno.test("Quantity conversions", async (t) => {
     const check = async (

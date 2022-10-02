@@ -1,6 +1,5 @@
 import { assertThrows } from "./asserts.test.ts";
-import { Dimensions } from "./dimensions.ts";
-import { QuantityError } from "./error.ts";
+import { Dimensions, QuantityError } from "../mod.ts";
 
 Deno.test(`Dimensions constructor`, async (t) => {
     await t.step(

@@ -1,6 +1,5 @@
 import { assertEquals, assertThrows } from "./asserts.test.ts";
-import { QuantityError } from "./error.ts";
-import { ParsedUnit, parseUnits } from "./units.ts";
+import { ParsedUnit, parseUnits, QuantityError } from "../mod.ts";
 
 Deno.test(`parseUnits()`, async (t) => {
     const pairs: [input: string, output: ParsedUnit[]][] = [
