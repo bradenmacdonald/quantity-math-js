@@ -73,9 +73,14 @@ export class Dimensions {
         return this === Dimensionless || this.dimensions.every((d) => d == 0);
     }
 
+    private _cachedDimensionality: number | undefined;
+
     /** Get the dimensionality of this - the sum of the absolute values of all dimensions */
     public get dimensionality(): number {
-        return this.dimensions.reduce<number>((sum, d) => sum + Math.abs(d ?? 0), 0);
+        if (this._cachedDimensionality === undefined) {
+            this._cachedDimensionality = this.dimensions.reduce<number>((sum, d) => sum + Math.abs(d ?? 0), 0);
+        }
+        return this._cachedDimensionality;
     }
 
     public equalTo(other: Dimensions): boolean {

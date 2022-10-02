@@ -231,30 +231,24 @@ export class Quantity {
         // are the best match for the dimension
         const useUnits: number[] = [];
         const useUnitsPower: number[] = [];
-        let remainder = this._dimensions.dimensionality;
-        let remainderDimensions = this._dimensions;
-        while (remainder > 0) {
+        let remainder = this._dimensions;
+        while (remainder.dimensionality > 0) {
             let bestIdx = -1;
             let bestInv = 0;
             let bestRemainder = remainder;
-            let bestRemainderDimensions = Dimensionless;
             for (let unitIdx = 0; unitIdx < unitList.length; unitIdx++) {
                 const unitDimensions = unitArray[unitIdx];
                 for (let isInv = 1; isInv >= -1; isInv -= 2) {
-                    const newRemainderDimensions = remainderDimensions.multiply(
-                        isInv === 1 ? unitDimensions.invert() : unitDimensions,
-                    );
-                    const newRemainder = newRemainderDimensions.dimensionality;
+                    const newRemainder = remainder.multiply(isInv === 1 ? unitDimensions.invert() : unitDimensions);
                     // If this unit reduces the dimensionality more than the best candidate unit yet found,
                     // or reduces the dimensionality by the same amount but is in the numerator rather than denominator:
                     if (
-                        (newRemainder < bestRemainder) ||
-                        (newRemainder === bestRemainder && isInv === 1 && bestInv === -1)
+                        (newRemainder.dimensionality < bestRemainder.dimensionality) ||
+                        (newRemainder.dimensionality === bestRemainder.dimensionality && isInv === 1 && bestInv === -1)
                     ) {
                         bestIdx = unitIdx;
                         bestInv = isInv;
                         bestRemainder = newRemainder;
-                        bestRemainderDimensions = newRemainderDimensions;
                         break; // Tiny optimization: if this unit is better than bestRemainder, we don't need to check its inverse
                     }
                 }
@@ -262,7 +256,7 @@ export class Quantity {
             // Check to make sure that progress is being made towards remainder = 0
             // if no more progress is being made then the provided units don't span
             // this unit, throw an error.
-            if (bestRemainder >= remainder) {
+            if (bestRemainder.dimensionality >= remainder.dimensionality) {
                 throw new QuantityError(`Cannot represent this quantity with the supplied units`);
             }
             // Check if the new best unit already in the set of numerator or
@@ -276,7 +270,6 @@ export class Quantity {
                 useUnitsPower[existingIdx] += bestInv;
             }
             remainder = bestRemainder;
-            remainderDimensions = bestRemainderDimensions;
         }
 
         // At this point the units to be used are in useUnits
