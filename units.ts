@@ -52,17 +52,17 @@ export interface Unit {
 // their typing, and ensures that the array doesn't get mutated.
 const makeUnits = <UD extends Record<string, Unit>>(ud: UD) => Object.freeze(ud);
 
-const MASS_DIMENSION = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]);
-const DIST_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]);
-const TIME_DIMENSION = new Dimensions([0, 0, 1, 0, 0, 0, 0, 0]);
-const TEMP_DIMENSION = new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]);
+const MASS_DIMENSION = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0, 0]);
+const DIST_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0, 0]);
+const TIME_DIMENSION = new Dimensions([0, 0, 1, 0, 0, 0, 0, 0, 0]);
+const TEMP_DIMENSION = new Dimensions([0, 0, 0, 1, 0, 0, 0, 0, 0]);
 
-const NRGY_DIMENSIONS = new Dimensions([1, 2, -2, 0, 0, 0, 0, 0]);
-const POWR_DIMENSIONS = new Dimensions([1, 2, -3, 0, 0, 0, 0, 0]);
-const VOLM_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0]);
-const AREA_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]);
-const INFO_DIMENSIONS = new Dimensions([0, 0, 0, 0, 0, 0, 0, 1]);
-const PRSR_DIMENSIONS = new Dimensions([1, -1, -2, 0, 0, 0, 0, 0]);
+const NRGY_DIMENSIONS = new Dimensions([1, 2, -2, 0, 0, 0, 0, 0, 0]);
+const POWR_DIMENSIONS = new Dimensions([1, 2, -3, 0, 0, 0, 0, 0, 0]);
+const VOLM_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0, 0]);
+const AREA_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0, 0]);
+const INFO_DIMENSIONS = new Dimensions([0, 0, 0, 0, 0, 0, 0, 1, 0]);
+const PRSR_DIMENSIONS = new Dimensions([1, -1, -2, 0, 0, 0, 0, 0, 0]);
 
 export const builtInUnits = makeUnits(
     {
@@ -188,7 +188,7 @@ export const builtInUnits = makeUnits(
         // "fps": { s: 3.048e-1, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
         // "knot": { s: 5.14444444444444e-1, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
         // "admkn": { s: 5.14773333333333e-1, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
-        "c": { s: 2.99792458e+8, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0]) },
+        "c": { s: 2.99792458e+8, d: new Dimensions([0, 1, -1, 0, 0, 0, 0, 0, 0]) },
         // "grav": { s: 9.80665e+0, d: new Dimensions([0, 1, -2, 0, 0, 0, 0, 0]) },
         // "galileo": { s: 1e-2, d: new Dimensions([0, 1, -2, 0, 0, 0, 0, 0]) },
         /** Pascal: SI standard unit for pressure defined as 1 N/m^2 */
@@ -216,7 +216,7 @@ export const builtInUnits = makeUnits(
         // Force
 
         /** Newtons */
-        "N": { s: 1e+0, d: new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]), prefixable: true },
+        "N": { s: 1e+0, d: new Dimensions([1, 1, -2, 0, 0, 0, 0, 0, 0]), prefixable: true },
         // "dyn": { s: 1e-5, d: new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]) },
         /** Gram Force: the amount of force exerted by standard gravity on a 1 gram mass */
         // "gf": { s: 9.80665e-3, d: new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]) },
@@ -326,37 +326,37 @@ export const builtInUnits = makeUnits(
         // Electromagnetism
 
         /** Ampere: SI standard unit for electric current, equal to 1 C/s */
-        "A": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 1, 0, 0, 0]), prefixable: true },
+        "A": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 1, 0, 0, 0, 0]), prefixable: true },
         /** Coulomb: SI standard unit for electric charge */
-        "C": { s: 1e+0, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]), prefixable: true },
+        "C": { s: 1e+0, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0, 0]), prefixable: true },
         /** Amp Hour: Charge collected from 1 Amp over 1 hour */
-        "Ah": { s: 3.6e+3, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]), prefixable: true },
+        "Ah": { s: 3.6e+3, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0, 0]), prefixable: true },
         // "e": { s: 1.602176634e-19, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]) },
         /** Volt */
-        "V": { s: 1, d: new Dimensions([1, 2, -3, 0, -1, 0, 0, 0]) },
+        "V": { s: 1, d: new Dimensions([1, 2, -3, 0, -1, 0, 0, 0, 0]) },
         /** Ohm/Ω: Derived SI unit for electrical resistance */
-        "ohm": { s: 1, d: new Dimensions([1, 2, -3, 0, -2, 0, 0, 0]) },
+        "ohm": { s: 1, d: new Dimensions([1, 2, -3, 0, -2, 0, 0, 0, 0]) },
         /** Farad: Derived SI unit of electrical capacitance */
-        "F": { s: 1e+0, d: new Dimensions([-1, -2, 4, 0, 2, 0, 0, 0]) },
+        "F": { s: 1e+0, d: new Dimensions([-1, -2, 4, 0, 2, 0, 0, 0, 0]) },
         /** Henry: Derived SI unit for inductance */
-        "H": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -2, 0, 0, 0]) },
+        "H": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -2, 0, 0, 0, 0]) },
         /** Siemens: Derived SI unit for electrical conductance, equal to 1 / ohm */
-        "S": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0]) },
-        // "mho": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0]) },
+        "S": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0, 0]) },
+        // "mho": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0, 0]) },
         /** Weber: SI unit for magnetic flux defined as 1 kg m^2 / (s^2 A) */
-        "Wb": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0]) },
-        // "Mx": { s: 1e-8, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0]) },
+        "Wb": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0, 0]) },
+        // "Mx": { s: 1e-8, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0, 0]) },
         /** Tesla: SI unit for magnetic flux density defined as 1 Wb / m^2 */
-        "T": { s: 1e+0, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0]) },
-        // "Gs": { s: 1e-4, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0]) },
-        // "gs": { s: 1e-4, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0]) },
-        // "Fr": { s: 3.3356409519815207e-10, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]) },
-        // "Gi": { s: 7.957747e-1, d: new Dimensions([0, 0, 0, 0, 1, 0, 0, 0]) },
-        // "Oe": { s: 7.957747154594767e+1, d: new Dimensions([0, -1, 0, 0, 1, 0, 0, 0]) },
+        "T": { s: 1e+0, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0, 0]) },
+        // "Gs": { s: 1e-4, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0, 0]) },
+        // "gs": { s: 1e-4, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0, 0]) },
+        // "Fr": { s: 3.3356409519815207e-10, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0, 0]) },
+        // "Gi": { s: 7.957747e-1, d: new Dimensions([0, 0, 0, 0, 1, 0, 0, 0, 0]) },
+        // "Oe": { s: 7.957747154594767e+1, d: new Dimensions([0, -1, 0, 0, 1, 0, 0, 0, 0]) },
         /** Mole: SI standard unit for an amount of substance, defined as exactly 6.02214076e23 elementary entities (usually molecules) */
-        "mol": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 0, 1, 0, 0]) },
+        "mol": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 0, 1, 0, 0, 0]) },
         /** Molar Concentration: Amount of substance per Liter of solution */
-        "M": { s: 1e+3, d: new Dimensions([0, -3, 0, 0, 0, 1, 0, 0]) },
+        "M": { s: 1e+3, d: new Dimensions([0, -3, 0, 0, 0, 1, 0, 0, 0]) },
         // "kat": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 1, 0, 0]) },
         // "U": { s: 1.6666666666666667e-8, d: new Dimensions([0, 0, -1, 0, 0, 1, 0, 0]) },
         /** Candela */
@@ -387,7 +387,7 @@ export const builtInUnits = makeUnits(
         /** If the non-SI unit rpm is considered a unit of frequency, then 1 rpm = 1/60 Hz (Wikipedia) */
         // "rpm": { s: 1/60, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
         /** Hertz: Frequency defined as 1 (cycle or rotation) / sec */
-        "Hz": { s: 1, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
+        "Hz": { s: 1, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, 0]) },
         // "Bq": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
         // "Gy": { s: 1e+0, d: new Dimensions([0, 2, -2, 0, 0, 0, 0, 0]) },
         // "Sv": { s: 1e+0, d: new Dimensions([0, 2, -2, 0, 0, 0, 0, 0]) },
@@ -401,7 +401,7 @@ export const builtInUnits = makeUnits(
         /** pphpd: "passengers per hour per direction" (_pax/h⋅_dir) */
         pphpd: {
             s: 1 / 3600,
-            d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, -1, 1], ["dir", "pax"]),
+            d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 1], ["dir", "pax"]),
         },
     } as const,
 );
@@ -522,7 +522,7 @@ export function getUnitData(unit: string, additionalUnits?: Readonly<Record<stri
     } else if (unit.startsWith("_")) {
         // This is our shorthand notation for the base unit in a custom dimension.
         // e.g. "_pax" is a custom unit with dimensionality of 1 in the "pax" dimension.
-        return { s: 1, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 1], [unit.substring(1)]) };
+        return { s: 1, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [unit.substring(1)]) };
     }
     throw new QuantityError(`Unknown/unsupported unit "${unit}"`);
 }

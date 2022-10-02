@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "./asserts.test.ts";
 import { Dimensions, QuantityError } from "../mod.ts";
 
-const baseDimensions = [0, 0, 0, 0, 0, 0, 0, 0] as const;
+const baseDimensions = [0, 0, 0, 0, 0, 0, 0, 0, 0] as const;
 
 Deno.test(`Dimensions constructor`, async (t) => {
     await t.step(
@@ -19,14 +19,14 @@ Deno.test(`Dimensions constructor`, async (t) => {
             assertThrows(
                 () => {
                     // @ts-expect-error: array has too few entries
-                    new Dimensions([1, 2, 3, 4, 5, 6, 7]);
+                    new Dimensions([1, 2, 3, 4, 5, 6, 7, 8]);
                 },
                 QuantityError,
                 "not enough dimensions specified for Quantity.",
             );
 
             // This one throws no error:
-            new Dimensions([1, 2, 3, 4, 5, 6, 7, 8]);
+            new Dimensions([1, 2, 3, 4, 5, 6, 7, 8, 9]);
         },
     );
 

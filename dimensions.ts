@@ -7,7 +7,7 @@ import { QuantityError } from "./error.ts";
  * As opposed to custom dimensions, like "flurbs per bloop" which has two
  * custom dimensions (flurbs and bloops).
  */
-const numBasicDimensions = 8;
+const numBasicDimensions = 9;
 
 // TODO: add an angle dimension, like Boost and Mathematica do.
 
@@ -22,6 +22,7 @@ export class Dimensions {
             substance: number,
             luminosity: number,
             information: number,
+            angle: number,
             /**
              * Track custom dimensions.
              *
@@ -182,4 +183,4 @@ export class Dimensions {
     }
 }
 
-export const Dimensionless = new Dimensions([0, 0, 0, 0, 0, 0, 0, 0]);
+export const Dimensionless = new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0]);
