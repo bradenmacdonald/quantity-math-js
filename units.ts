@@ -321,10 +321,10 @@ export const builtInUnits = makeUnits(
         // "byte": { s: 8e+0, d: INFO_DIMENSIONS },
         // "word": { s: 1.6e+1, d: INFO_DIMENSIONS },
         // "dword": { s: 3.2e+1, d: INFO_DIMENSIONS },
+        // "baud": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 1]) },
 
         // Electromagnetism
 
-        // "baud": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 1]) },
         /** Ampere: SI standard unit for electric current, equal to 1 C/s */
         "A": { s: 1e+0, d: new Dimensions([0, 0, 0, 0, 1, 0, 0, 0]), prefixable: true },
         /** Coulomb: SI standard unit for electric charge */
