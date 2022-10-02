@@ -73,6 +73,11 @@ export class Dimensions {
         return this === Dimensionless || this.dimensions.every((d) => d == 0);
     }
 
+    /** Get the dimensionality of this - the sum of the absolute values of all dimensions */
+    public get dimensionality(): number {
+        return this.dimensions.reduce<number>((sum, d) => sum + Math.abs(d ?? 0), 0);
+    }
+
     public equalTo(other: Dimensions): boolean {
         return (
             this.dimensions.length === other.dimensions.length &&
@@ -96,6 +101,13 @@ export class Dimensions {
         const newDimArray = this.dimensions.map((d, i) => d! + y.dimensions[i]!);
         // deno-lint-ignore no-explicit-any
         return new Dimensions(newDimArray as any, []);
+    }
+
+    /** Invert these dimensions, returning a new inverted Dimensions instance */
+    public invert(): Dimensions {
+        const newDimArray = this.dimensions.map((d) => d! * -1);
+        // deno-lint-ignore no-explicit-any
+        return new Dimensions(newDimArray as any, this.customDimensionNames);
     }
 
     /** Raise these dimensions to a power */

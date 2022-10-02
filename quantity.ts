@@ -231,25 +231,20 @@ export class Quantity {
         // are the best match for the dimension
         const useUnits: number[] = [];
         const useUnitsPower: number[] = [];
-        let remainder = this._dimensions.dimensions.reduce<number>((sum, d) => sum + Math.abs(d ?? 0), 0);
-        let remainderArray = [...this._dimensions.dimensions];
+        let remainder = this._dimensions.dimensionality;
+        let remainderDimensions = this._dimensions;
         while (remainder > 0) {
             let bestIdx = -1;
             let bestInv = 0;
             let bestRemainder = remainder;
-
-            const TEMP_NUM_DIMENSIONS = 8;
-
-            let bestRemainderArray = new Array(TEMP_NUM_DIMENSIONS);
+            let bestRemainderDimensions = Dimensionless;
             for (let unitIdx = 0; unitIdx < unitList.length; unitIdx++) {
+                const unitDimensions = unitArray[unitIdx];
                 for (let isInv = 1; isInv >= -1; isInv -= 2) {
-                    let newRemainder = 0;
-                    const newRemainderArray = new Array(TEMP_NUM_DIMENSIONS);
-                    for (let dimIdx = 0; dimIdx < TEMP_NUM_DIMENSIONS; dimIdx++) {
-                        newRemainderArray[dimIdx] = remainderArray[dimIdx]! -
-                            (isInv * unitArray[unitIdx].dimensions[dimIdx]!);
-                        newRemainder += Math.abs(newRemainderArray[dimIdx]);
-                    }
+                    const newRemainderDimensions = remainderDimensions.multiply(
+                        isInv === 1 ? unitDimensions.invert() : unitDimensions,
+                    );
+                    const newRemainder = newRemainderDimensions.dimensionality;
                     // If this unit reduces the dimensionality more than the best candidate unit yet found,
                     // or reduces the dimensionality by the same amount but is in the numerator rather than denominator:
                     if (
@@ -259,7 +254,7 @@ export class Quantity {
                         bestIdx = unitIdx;
                         bestInv = isInv;
                         bestRemainder = newRemainder;
-                        bestRemainderArray = newRemainderArray;
+                        bestRemainderDimensions = newRemainderDimensions;
                         break; // Tiny optimization: if this unit is better than bestRemainder, we don't need to check its inverse
                     }
                 }
@@ -281,7 +276,7 @@ export class Quantity {
                 useUnitsPower[existingIdx] += bestInv;
             }
             remainder = bestRemainder;
-            remainderArray = bestRemainderArray;
+            remainderDimensions = bestRemainderDimensions;
         }
 
         // At this point the units to be used are in useUnits
