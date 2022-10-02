@@ -13,6 +13,7 @@ export interface SerializedQuantity {
 const setUnitHintSet = Symbol("unitHintSet");
 
 export class Quantity {
+    /** The magnitude (numeric part) of this Quantity value. Always in the base units (kg, m, s, etc.). */
     public get magnitude() {
         return this._magnitude;
     }
@@ -21,6 +22,7 @@ export class Quantity {
         return this._dimensions;
     }
     public readonly significantFigures: number | undefined;
+    /** The uncertainty/error/tolerance that this value has. Always in the base units (kg, m, s, etc.). */
     public get plusMinus() {
         return this._plusMinus;
     }
@@ -44,10 +46,10 @@ export class Quantity {
             dimensions?: Dimensions;
             units?: string | ParsedUnit[];
             /**
-             * If set, only this many of the decimal digits of 'magnitude' are significant.
+             * If set, only this many of the decimal digits of the magnitude are significant.
              */
             significantFigures?: number;
-            /** Allowed tolerance or uncertainty in this measurement */
+            /** Allowed uncertainty/error/tolerance in this measurement. Must be using the same units as the magnitude. */
             plusMinus?: number;
             /** Internal use only - set the _unitHintSet on this newly constructed Quantity */
             [setUnitHintSet]?: ParsedUnit[];
