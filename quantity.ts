@@ -1,6 +1,6 @@
 import { Dimensionless, Dimensions } from "./dimensions.ts";
 import { QuantityError } from "./error.ts";
-import { builtInUnits, ParsedUnit, parseUnits, prefixes, toUnitString, Unit } from "./units.ts";
+import { getUnitData, ParsedUnit, parseUnits, prefixes, toUnitString } from "./units.ts";
 
 export interface SerializedQuantity {
     magnitude: number;
@@ -65,12 +65,12 @@ export class Quantity {
             this._unitHintSet = units;
             this._dimensions = Dimensionless;
             for (const u of units) {
-                const unitData = builtInUnits[u.unit as keyof typeof builtInUnits];
+                const unitData = getUnitData(u.unit);
                 const scale = u.prefix ? unitData.s * prefixes[u.prefix] : unitData.s;
                 const unitQuantity = new Quantity(scale, { dimensions: unitData.d });
                 unitQuantity._pow(u.power);
                 this._multiply(unitQuantity);
-                if ("offset" in unitData) {
+                if (unitData.offset) {
                     if (units.length !== 1) {
                         throw new QuantityError(
                             `It is not permitted to use compound units that include the offset unit "${u}". Try using K, deltaC, or Pa instead.`,
@@ -221,14 +221,8 @@ export class Quantity {
      * that can be used to represent this quantity.
      */
     protected pickUnitsFromList(unitList: Omit<ParsedUnit, "power">[]): ParsedUnit[] {
-        const allUnits: Record<string, Unit> = builtInUnits;
-
         // Convert unitList to a dimension Array
-        const unitArray: Dimensions[] = unitList.map((u) => {
-            const d = allUnits[u.unit]?.d;
-            if (d === undefined) throw new QuantityError(`Unknown unit "${u.unit}"`);
-            return d;
-        });
+        const unitArray: Dimensions[] = unitList.map((u) => getUnitData(u.unit).d);
         // Loop through each dimension and create a list of unit list indexes that
         // are the best match for the dimension
         const useUnits: number[] = [];

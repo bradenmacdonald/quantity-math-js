@@ -83,29 +83,79 @@ export class Dimensions {
         return this._cachedDimensionality;
     }
 
+    private static combineCustomDimensionNames(x: Dimensions, y: Dimensions) {
+        const customDimensionNames = [...x.customDimensionNames];
+        for (const custDimName of y.customDimensionNames) {
+            if (!customDimensionNames.includes(custDimName)) {
+                customDimensionNames.push(custDimName);
+            }
+        }
+        // Custom dimension names must always be sorted.
+        customDimensionNames.sort();
+        return customDimensionNames;
+    }
+
+    /**
+     * Check if the dimensions of this are equal to the dimensions of another Dimensions object.
+     * This will ignore any custom dimensions that are zero in one object but missing in the other,
+     * as those are still compatible Dimensions objects.
+     */
     public equalTo(other: Dimensions): boolean {
-        return (
-            this.dimensions.length === other.dimensions.length &&
-            this.dimensions.every((d, i) => d === other.dimensions[i]) &&
-            this.customDimensionNames.length ===
-                other.customDimensionNames.length &&
-            (
-                this.customDimensionNames.every((cdn, i) => cdn === other.customDimensionNames?.[i])
-            )
-        );
+        for (let i = 0; i < numBasicDimensions; i++) {
+            if (this.dimensions[i] !== other.dimensions[i]) {
+                return false;
+            }
+        }
+        if (this.customDimensionNames.length === 0 && other.customDimensionNames.length === 0) {
+            // Normal case: no custom dimensions to worry about.
+            return true;
+        }
+        // Complex case: make sure that the non-zero custom dimensions are the same.
+        for (const name of Dimensions.combineCustomDimensionNames(this, other)) {
+            const thisIdx = this.customDimensionNames.indexOf(name);
+            const thisValue = thisIdx === -1 ? 0 : this.dimensions[numBasicDimensions + thisIdx];
+            const otherIdx = other.customDimensionNames.indexOf(name);
+            const otherValue = otherIdx === -1 ? 0 : other.dimensions[numBasicDimensions + otherIdx];
+            if (thisValue !== otherValue) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Multiply these dimensions by another dimensions */
     public multiply(y: Dimensions): Dimensions {
-        if (this.customDimensionNames.length || y.customDimensionNames.length) {
-            throw new QuantityError(
-                "Multiplying custom dimensions is not yet implemented",
-            );
+        if (this.customDimensionNames.length === 0 && y.customDimensionNames.length === 0) {
+            // Normal case - no custom dimensions:
+            const newDimArray = this.dimensions.map((d, i) => d! + y.dimensions[i]!);
+            // deno-lint-ignore no-explicit-any
+            return new Dimensions(newDimArray as any, []);
+        } else {
+            // We have to handle custom dimensions in one or both Dimensions objects.
+            // They may have different custom dimensions or may be the same.
+            const customDimensionNames = Dimensions.combineCustomDimensionNames(this, y);
+            // Now we have the new set of custom dimension names.
+            if (customDimensionNames.length > 4) {
+                throw new QuantityError("Cannot have more than 4 custom dimensions.");
+            }
+            const newDimArray = new Array<number>(numBasicDimensions + customDimensionNames.length);
+            // Multiply the basic dimensions:
+            for (let i = 0; i < numBasicDimensions; i++) {
+                newDimArray[i] = this.dimensions[i]! + y.dimensions[i]!;
+            }
+            // Multiply the custom dimensions:
+            for (let i = 0; i < customDimensionNames.length; i++) {
+                let dimValue = 0;
+                const custDimName = customDimensionNames[i];
+                const thisIdx = this.customDimensionNames.indexOf(custDimName);
+                if (thisIdx !== -1) dimValue += this.dimensions[numBasicDimensions + thisIdx]!;
+                const yIdx = y.customDimensionNames.indexOf(custDimName);
+                if (yIdx !== -1) dimValue += y.dimensions[numBasicDimensions + yIdx]!;
+                newDimArray[numBasicDimensions + i] = dimValue;
+            }
+            // deno-lint-ignore no-explicit-any
+            return new Dimensions(newDimArray as any, customDimensionNames as any);
         }
-
-        const newDimArray = this.dimensions.map((d, i) => d! + y.dimensions[i]!);
-        // deno-lint-ignore no-explicit-any
-        return new Dimensions(newDimArray as any, []);
     }
 
     /** Invert these dimensions, returning a new inverted Dimensions instance */

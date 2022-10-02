@@ -1,5 +1,7 @@
-import { assertThrows } from "./asserts.test.ts";
+import { assertEquals, assertThrows } from "./asserts.test.ts";
 import { Dimensions, QuantityError } from "../mod.ts";
+
+const baseDimensions = [0, 0, 0, 0, 0, 0, 0, 0] as const;
 
 Deno.test(`Dimensions constructor`, async (t) => {
     await t.step(
@@ -27,8 +29,6 @@ Deno.test(`Dimensions constructor`, async (t) => {
             new Dimensions([1, 2, 3, 4, 5, 6, 7, 8]);
         },
     );
-
-    const baseDimensions = [0, 0, 0, 0, 0, 0, 0, 0] as const;
 
     await t.step(
         `it requires that custom dimensions have names (1 custom dimension)`,
@@ -99,4 +99,28 @@ Deno.test(`Dimensions constructor`, async (t) => {
             new Dimensions([...baseDimensions, 1, 0], ["aaa", "aab"]);
         },
     );
+});
+
+Deno.test(`Multiplying custom dimensions`, async (t) => {
+    await t.step(`same custom dimensions (1)`, () => {
+        const a = new Dimensions([...baseDimensions, 1], ["foo"]);
+        const b = new Dimensions([...baseDimensions, 1], ["foo"]);
+        const c = a.multiply(b);
+        assertEquals(c, new Dimensions([...baseDimensions, 2], ["foo"]));
+    });
+
+    await t.step(`same custom dimensions (4)`, () => {
+        const a = new Dimensions([...baseDimensions, 1, 2, 0, -3], ["abc", "bar", "foo", "zzzzzzz"]);
+        const b = new Dimensions([...baseDimensions, 0, 1, -1, -2], ["abc", "bar", "foo", "zzzzzzz"]);
+        const c = a.multiply(b);
+        assertEquals(c, new Dimensions([...baseDimensions, 1, 3, -1, -5], ["abc", "bar", "foo", "zzzzzzz"]));
+    });
+
+    await t.step(`different custom dimensions (4)`, () => {
+        const a = new Dimensions([...baseDimensions, 1, 2], ["bar", "foo"]);
+        const b = new Dimensions([...baseDimensions, 4, 8], ["foo", "tribble"]);
+        const c = a.multiply(b);
+        assertEquals(c, new Dimensions([...baseDimensions, 1, 6, 8], ["bar", "foo", "tribble"]));
+        assertEquals(c, b.multiply(a));
+    });
 });

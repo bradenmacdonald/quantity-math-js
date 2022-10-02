@@ -398,13 +398,10 @@ export const builtInUnits = makeUnits(
 
         // Misc.
 
-        // pphpd: "passengers per hour per direction"
+        /** pphpd: "passengers per hour per direction" (_pax/h⋅_dir) */
         pphpd: {
             s: 1 / 3600,
-            d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, -1, 1], [
-                "direction",
-                "pax",
-            ]),
+            d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, -1, 1], ["dir", "pax"]),
         },
     } as const,
 );
@@ -438,6 +435,10 @@ function parseSingleUnit(
 
     if (prefixedUnit in units) {
         // Easiest case: unit exists and is ready to use
+        return { unit: prefixedUnit, power };
+    } else if (prefixedUnit[0] === "_") {
+        // This represents a base unit in a custom dimension.
+        // e.g. "_pax" is a custom unit with dimensionality of 1 in the "pax" dimension.
         return { unit: prefixedUnit, power };
     } else {
         // Try some prefixes:
@@ -512,4 +513,16 @@ export function toUnitString(units: ParsedUnit[]): string {
         }
     }
     return numerator.join("⋅");
+}
+
+export function getUnitData(unit: string, additionalUnits?: Readonly<Record<string, Unit>>): Unit {
+    const units: Record<string, Unit> = additionalUnits ? { ...builtInUnits, ...additionalUnits } : builtInUnits;
+    if (unit in units) {
+        return units[unit];
+    } else if (unit.startsWith("_")) {
+        // This is our shorthand notation for the base unit in a custom dimension.
+        // e.g. "_pax" is a custom unit with dimensionality of 1 in the "pax" dimension.
+        return { s: 1, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 1], [unit.substring(1)]) };
+    }
+    throw new QuantityError(`Unknown/unsupported unit "${unit}"`);
 }
