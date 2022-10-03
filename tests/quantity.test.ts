@@ -143,6 +143,26 @@ Deno.test("Constructing Quantity instances with units", async (t) => {
     });
 });
 
+Deno.test("Sorting/comparing quantities", () => {
+    const list = [
+        new Quantity(2, { units: "km" }),
+        new Quantity(1, { units: "cm" }),
+        new Quantity(5, { units: "cm" }),
+        new Quantity(1, { units: "in" }),
+        new Quantity(20, { units: "mm" }),
+        new Quantity(-2, { units: "m" }),
+    ];
+    list.sort(Quantity.compare);
+    assertEquals(list, [
+        new Quantity(-2, { units: "m" }),
+        new Quantity(1, { units: "cm" }),
+        new Quantity(20, { units: "mm" }),
+        new Quantity(1, { units: "in" }),
+        new Quantity(5, { units: "cm" }),
+        new Quantity(2, { units: "km" }),
+    ]);
+});
+
 Deno.test("Adding quantities", async (t) => {
     await t.step(`cannot add units of different dimensions`, () => {
         const x = new Quantity(5, { units: "m" });

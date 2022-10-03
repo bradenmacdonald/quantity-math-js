@@ -110,6 +110,18 @@ export class Quantity {
         );
     }
 
+    public static compare(a: Quantity, b: Quantity, ignoreUnits = false) {
+        if (!ignoreUnits) {
+            if (!a._dimensions.equalTo(b._dimensions)) {
+                throw new QuantityError(
+                    "Cannot compare Quantities with different dimensions, unless using ignoreUnits=true.",
+                );
+            }
+        }
+        const diff = a.magnitude - b.magnitude;
+        return diff === 0 ? 0 : diff > 0 ? 1 : -1;
+    }
+
     toString(): string {
         const serialized = this.get();
         let r = serialized.significantFigures === undefined
