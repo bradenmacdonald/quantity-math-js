@@ -85,3 +85,15 @@ const fb = f.multiply(b);
 fb.toString(); // "20 _foo⋅_bar"
 fb.multiply(f).toString(); // "200 _foo^2⋅_bar"
 ```
+
+## Development Roadmap / TODOs
+
+* Finish implementing "significant digits"
+* Implement more mathematical operations like division and exponentiation.
+* Add support for angular units, including converting radians to degrees and
+  treating "angle" as a dimension, to avoid ambiguities with units like "rpm"
+  and "Hz".
+* Consider adding support for additional units (radiation, angles, more
+  non-SI units). Note that this library generally tries _not_ to support units
+  that can be considered deprecated (like "bar", "dram", "furlong", "league",
+  "poise"), etc. or that are ambiguous (like "ton", "gallon", etc.).
