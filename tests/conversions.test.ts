@@ -25,6 +25,8 @@ Deno.test("Quantity conversions", async (t) => {
     await check(1, { units: "cm" }, "m", { magnitude: 0.01 });
     await check(2, { units: "in" }, "m", { magnitude: 0.0508 });
     await check(12, { units: "in" }, "ft", { magnitude: 1 });
+    await check(1, { units: "mi" }, "ft", { magnitude: 5280 });
+    await check(100, { units: "km/h" }, "mi/h", { magnitude: 62.137119224 });
     // Mass:
     await check(500, { units: "g" }, "kg", { magnitude: 0.5 });
     // Time:

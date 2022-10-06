@@ -116,7 +116,7 @@ export const builtInUnits = makeUnits(
         "ft": { s: 3.048e-1, d: DIST_DIMENSION },
         // "yd": { s: 9.144e-1, d: DIST_DIMENSION },
         // "ell": { s: 1.143e+0, d: DIST_DIMENSION },
-        // "mi": { s: 1.609344e+3, d: DIST_DIMENSION },
+        "mi": { s: 1.609344e+3, d: DIST_DIMENSION },
         // "survey_mi": { s: 1.6093472186944373e+3, d: DIST_DIMENSION },
         // "nmi": { s: 1.852e+3, d: DIST_DIMENSION },
         // "Nmi": { s: 1.852e+3, d: DIST_DIMENSION },
