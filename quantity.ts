@@ -155,7 +155,7 @@ export class Quantity {
             }
             r += "±" + plusMinusString;
         }
-        if (!this.isDimensionless) {
+        if (serialized.units.length > 0) {
             r += " " + serialized.units;
         }
         return r;
@@ -278,6 +278,19 @@ export class Quantity {
                 useUnitsPower[existingIdx] += bestInv;
             }
             remainder = bestRemainder;
+        }
+
+        // Special case to handle dimensionless units like "%" that we may actually want to use:
+        if (unitList.length === 1 && useUnits.length === 0) {
+            // We want "50 % ⋅ 50 %" to give "25 %"
+            // But we want "50 % ⋅ 400 g" to give "200 g" (not "20,000 g⋅%"!)
+            for (let unitIdx = 0; unitIdx < unitList.length; unitIdx++) {
+                if (unitArray[unitIdx].isDimensionless) {
+                    useUnits.push(unitIdx);
+                    useUnitsPower.push(1);
+                    break; // Only include up to one dimensionless unit like "%"
+                }
+            }
         }
 
         // At this point the units to be used are in useUnits

@@ -262,6 +262,18 @@ Deno.test("Multiplying quantities", async (t) => {
         assertEquals(z.magnitude, 15);
         assertEquals(z.dimensions, TWO_LENGTH_DIMENSIONS); // m²
     });
+    await t.step(`(50 %) * (50 %)`, () => {
+        const x = new Quantity(50, { units: "%" });
+        const y = new Quantity(50, { units: "%" });
+        const z = x.multiply(y);
+        assertEquals(z.toString(), "25 %");
+    });
+    await t.step(`(50 %) * (400 g)`, () => {
+        const x = new Quantity(50, { units: "%" });
+        const y = new Quantity(400, { units: "g" });
+        const z = x.multiply(y);
+        assertEquals(z.toString(), "200 g");
+    });
     await t.step(`(500 g) * (2 m/s^2)`, () => {
         const x = new Quantity(500, { units: "g" });
         const y = new Quantity(2, { units: "m/s^2" });
