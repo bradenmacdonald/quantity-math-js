@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "./asserts.test.ts";
+import { assertEquals, assertThrows } from "@std/assert";
 import { ParsedUnit, parseUnits, QuantityError } from "../mod.ts";
 
 Deno.test(`parseUnits()`, async (t) => {

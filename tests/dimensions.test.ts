@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "./asserts.test.ts";
+import { assertEquals, assertThrows } from "@std/assert";
 import { Dimensions, QuantityError } from "../mod.ts";
 
 const baseDimensions = [0, 0, 0, 0, 0, 0, 0, 0, 0] as const;

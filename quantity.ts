@@ -14,16 +14,16 @@ const setUnitHintSet = Symbol("unitHintSet");
 
 export class Quantity {
     /** The magnitude (numeric part) of this Quantity value. Always in the base units (kg, m, s, etc.). */
-    public get magnitude() {
+    public get magnitude(): number {
         return this._magnitude;
     }
     protected _dimensions: Dimensions;
-    public get dimensions() {
+    public get dimensions(): Dimensions {
         return this._dimensions;
     }
     public readonly significantFigures: number | undefined;
     /** The uncertainty/error/tolerance that this value has. Always in the base units (kg, m, s, etc.). */
-    public get plusMinus() {
+    public get plusMinus(): number | undefined {
         return this._plusMinus;
     }
     protected _plusMinus: number | undefined;
@@ -101,7 +101,7 @@ export class Quantity {
     }
 
     /** Is this Quantity exactly equal to another? */
-    public equals(other: Quantity) {
+    public equals(other: Quantity): boolean {
         return (
             this.sameDimensionsAs(other) &&
             this.magnitude === other.magnitude &&
@@ -110,7 +110,7 @@ export class Quantity {
         );
     }
 
-    public static compare(a: Quantity, b: Quantity, ignoreUnits = false) {
+    public static compare(a: Quantity, b: Quantity, ignoreUnits = false): 0 | 1 | -1 {
         if (!ignoreUnits) {
             if (!a._dimensions.equalTo(b._dimensions)) {
                 throw new QuantityError(

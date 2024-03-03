@@ -2,37 +2,39 @@ import { Dimensionless, Dimensions } from "./dimensions.ts";
 import { QuantityError } from "./error.ts";
 
 /** SI prefixes */
-export const prefixes = Object.freeze({
-    y: 1e-24,
-    z: 1e-21,
-    a: 1e-18,
-    f: 1e-15,
-    p: 1e-12,
-    n: 1e-9,
-    u: 1e-6,
-    m: 1e-3,
-    c: 1e-2,
-    d: 1e-1,
-    // We do not support the "da" prefix (although official, it is rarely used, and this allows us to assume that all 1-digit prefixes are metric/SI and all 2-digit are binary)
-    // da: 1e+1,
-    h: 1e+2,
-    k: 1e+3,
-    M: 1e+6,
-    G: 1e+9,
-    T: 1e+12,
-    P: 1e+15,
-    E: 1e+18,
-    Z: 1e+21,
-    Y: 1e+24,
-    Ki: 1.024e+3,
-    Mi: 1.048576e+6,
-    Gi: 1.073741824e+9,
-    Ti: 1.099511627776e+12,
-    Pi: 1.125899906842624e+15,
-    Ei: 1.152921504606847e+18,
-    Zi: 1.1805916207174113e+21,
-    Yi: 1.2089258196146292e+24,
-});
+export const prefixes = Object.freeze(
+    {
+        y: 1e-24,
+        z: 1e-21,
+        a: 1e-18,
+        f: 1e-15,
+        p: 1e-12,
+        n: 1e-9,
+        u: 1e-6,
+        m: 1e-3,
+        c: 1e-2,
+        d: 1e-1,
+        // We do not support the "da" prefix (although official, it is rarely used, and this allows us to assume that all 1-digit prefixes are metric/SI and all 2-digit are binary)
+        // da: 1e+1,
+        h: 1e+2,
+        k: 1e+3,
+        M: 1e+6,
+        G: 1e+9,
+        T: 1e+12,
+        P: 1e+15,
+        E: 1e+18,
+        Z: 1e+21,
+        Y: 1e+24,
+        Ki: 1.024e+3,
+        Mi: 1.048576e+6,
+        Gi: 1.073741824e+9,
+        Ti: 1.099511627776e+12,
+        Pi: 1.125899906842624e+15,
+        Ei: 1.152921504606847e+18,
+        Zi: 1.1805916207174113e+21,
+        Yi: 1.2089258196146292e+24,
+    } as const satisfies Record<string, number>,
+);
 
 type Prefix = keyof typeof prefixes;
 
@@ -48,23 +50,19 @@ export interface Unit {
     readonly binaryPrefixable?: true;
 }
 
-// A little helper that makes all the units available to TypeScript, validates
-// their typing, and ensures that the array doesn't get mutated.
-const makeUnits = <UD extends Record<string, Unit>>(ud: UD) => Object.freeze(ud);
+const MASS_DIMENSION: Dimensions = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0, 0]);
+const DIST_DIMENSION: Dimensions = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0, 0]);
+const TIME_DIMENSION: Dimensions = new Dimensions([0, 0, 1, 0, 0, 0, 0, 0, 0]);
+const TEMP_DIMENSION: Dimensions = new Dimensions([0, 0, 0, 1, 0, 0, 0, 0, 0]);
 
-const MASS_DIMENSION = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0, 0]);
-const DIST_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0, 0]);
-const TIME_DIMENSION = new Dimensions([0, 0, 1, 0, 0, 0, 0, 0, 0]);
-const TEMP_DIMENSION = new Dimensions([0, 0, 0, 1, 0, 0, 0, 0, 0]);
+const NRGY_DIMENSIONS: Dimensions = new Dimensions([1, 2, -2, 0, 0, 0, 0, 0, 0]);
+const POWR_DIMENSIONS: Dimensions = new Dimensions([1, 2, -3, 0, 0, 0, 0, 0, 0]);
+const VOLM_DIMENSIONS: Dimensions = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0, 0]);
+const AREA_DIMENSIONS: Dimensions = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0, 0]);
+const INFO_DIMENSIONS: Dimensions = new Dimensions([0, 0, 0, 0, 0, 0, 0, 1, 0]);
+const PRSR_DIMENSIONS: Dimensions = new Dimensions([1, -1, -2, 0, 0, 0, 0, 0, 0]);
 
-const NRGY_DIMENSIONS = new Dimensions([1, 2, -2, 0, 0, 0, 0, 0, 0]);
-const POWR_DIMENSIONS = new Dimensions([1, 2, -3, 0, 0, 0, 0, 0, 0]);
-const VOLM_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0, 0]);
-const AREA_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0, 0]);
-const INFO_DIMENSIONS = new Dimensions([0, 0, 0, 0, 0, 0, 0, 1, 0]);
-const PRSR_DIMENSIONS = new Dimensions([1, -1, -2, 0, 0, 0, 0, 0, 0]);
-
-export const builtInUnits = makeUnits(
+export const builtInUnits = Object.freeze(
     {
         // Dimensionless:
 
@@ -403,7 +401,7 @@ export const builtInUnits = makeUnits(
             s: 1 / 3600,
             d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 1], ["dir", "pax"]),
         },
-    } as const,
+    } as const satisfies Record<string, Unit>,
 );
 
 export interface ParsedUnit {

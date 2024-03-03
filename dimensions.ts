@@ -183,4 +183,4 @@ export class Dimensions {
     }
 }
 
-export const Dimensionless = new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0]);
+export const Dimensionless: Dimensions = new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0]);

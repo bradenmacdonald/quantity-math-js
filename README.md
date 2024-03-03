@@ -6,6 +6,8 @@ Based on [PQM](https://github.com/GhostWrench/pqm), with extensive changes.
 
 MIT licensed.
 
+Zero dependencies.
+
 ## Basic Usage
 
 Importing:
@@ -92,6 +94,17 @@ fb.multiply(f).toString(); // "200 _foo^2⋅_bar"
 - Implement more mathematical operations like division and exponentiation.
 - Add support for angular units, including converting radians to degrees and treating "angle" as a dimension, to avoid
   ambiguities with units like "rpm" and "Hz".
-- Consider adding support for additional units (radiation, angles, more non-SI units). Note that this library generally
-  tries _not_ to support units that can be considered deprecated (like "bar", "dram", "furlong", "league", "poise"),
-  etc. or that are ambiguous (like "ton", "gallon", etc.).
+- Consider adding support for additional units (radiation, angles, more non-SI units).
+
+## Non-features / Non-goals
+
+This library generally tries _not_ to support units that can be considered deprecated (like "bar", "dram", "furlong",
+"league", "poise", etc.) or that are ambiguous (like "ton", "gallon", etc.).
+
+## Running tests
+
+To run the tests, code formatter, linter, etc. you need to use [Deno](https://deno.com/). The commands are standard:
+
+    deno lint
+    deno fmt
+    deno test

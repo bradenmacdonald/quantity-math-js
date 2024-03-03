@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertFalse, assertNotEquals, assertThrows } from "./asserts.test.ts";
+import { assert, assertEquals, assertFalse, assertNotEquals, assertThrows } from "@std/assert";
 import { Dimensions, Quantity, QuantityError } from "../mod.ts";
 
 const ONE_MASS_DIMENSION = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0, 0]);

@@ -1,4 +1,4 @@
-import { assertEquals } from "./asserts.test.ts";
+import { assertEquals } from "@std/assert/assert_equals";
 import { Dimensions, Quantity } from "../mod.ts";
 
 Deno.test("Units with 'custom' dimensions", async (t) => {

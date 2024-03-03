@@ -1,0 +1,16 @@
+{
+    "name": "@bradenmacdonald/quantity-math-js",
+    "lock": false,
+    "exports": "./mod.ts",
+    "version": "1.0.0",
+    "fmt": {
+        "indentWidth": 4,
+        "lineWidth": 120
+    },
+    "lint": {
+        "rules": {
+            "exclude": ["no-slow-types"]
+        }
+    },
+    "imports": { "@std/assert": "jsr:@std/assert@^0.218" }
+}
