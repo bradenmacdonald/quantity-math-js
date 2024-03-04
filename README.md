@@ -8,6 +8,23 @@ MIT licensed.
 
 Zero dependencies.
 
+## Installation
+
+- Deno: `deno add @bradenmacdonald/quantity-math-js`
+- Deno (no install): `import { Quantity } from "jsr:@bradenmacdonald/quantity-math-js@1.0.1";`
+- NPM: `npx jsr add @bradenmacdonald/quantity-math-js`
+- Yarn: `yarn dlx jsr add @bradenmacdonald/quantity-math-js`
+- pnpm: `pnpm dlx jsr add @bradenmacdonald/quantity-math-js`
+- Bun: `bunx jsr add @bradenmacdonald/quantity-math-js`
+- Browser:
+  ```html
+  <script type="module">
+    import { Quantity } from "https://esm.sh/jsr/@bradenmacdonald/quantity-math-js@1.0.1";
+    // Or:
+    const { Quantity } = await import('https://esm.sh/jsr/@bradenmacdonald/quantity-math-js@1.0.1');
+  </script>
+  ```
+
 ## Basic Usage
 
 Importing:
@@ -100,23 +117,6 @@ const fb = f.multiply(b);
 fb.toString(); // "20 _foo⋅_bar"
 fb.multiply(f).toString(); // "200 _foo^2⋅_bar"
 ```
-
-## Installation
-
-- Deno: `deno add @bradenmacdonald/quantity-math-js`
-- Deno (no install): `import { Quantity } from "jsr:@bradenmacdonald/quantity-math-js@1.0.1";`
-- NPM: `npx jsr add @bradenmacdonald/quantity-math-js`
-- Yarn: `yarn dlx jsr add @bradenmacdonald/quantity-math-js`
-- pnpm: `pnpm dlx jsr add @bradenmacdonald/quantity-math-js`
-- Bun: `bunx jsr add @bradenmacdonald/quantity-math-js`
-- Browser:
-  ```html
-  <script type="module">
-    import { Quantity } from "https://esm.sh/jsr/@bradenmacdonald/quantity-math-js@1.0.1";
-    // Or:
-    const { Quantity } = await import('https://esm.sh/jsr/@bradenmacdonald/quantity-math-js@1.0.1');
-  </script>
-  ```
 
 ## Development Roadmap / TODOs
 
