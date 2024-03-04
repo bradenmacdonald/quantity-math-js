@@ -2,7 +2,7 @@
     "name": "@bradenmacdonald/quantity-math-js",
     "lock": false,
     "exports": "./mod.ts",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "fmt": {
         "indentWidth": 4,
         "lineWidth": 120
