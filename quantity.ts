@@ -2,6 +2,11 @@ import { Dimensionless, Dimensions } from "./dimensions.ts";
 import { QuantityError } from "./error.ts";
 import { getUnitData, ParsedUnit, parseUnits, prefixes, toUnitString } from "./units.ts";
 
+/**
+ * Simple data structure that holds all the key data of a Quantity instance.
+ *
+ * Suitable for JSON serialization.
+ */
 export interface SerializedQuantity {
     magnitude: number;
     significantFigures?: number;
@@ -12,21 +17,53 @@ export interface SerializedQuantity {
 // Private constructor parameter to pass '_unitHintSet' values.
 const setUnitHintSet = Symbol("unitHintSet");
 
+/**
+ * Quantity - a value with dimensions (units)
+ * e.g. `4`, `5 m`, `-32.1 kg⋅m/s^2`
+ *
+ * ```ts
+ * const force = new Quantity(10, {units: "N"});
+ * const distance = new Quantity(5, {units: "m"});
+ * force.multiply(distance).toString(); // "50 N⋅m"
+ * force.multiply(distance).getSI(); // { magnitude: 50, units: "J" }
+ * ```
+ *
+ * See also the {@link Q} syntactic sugar:
+ *
+ * ```ts
+ * Q`10 N`.multiply(Q`5 m`).getSI(); // { magnitude: 50, units: "J" }
+ * Q`10 m`.add(Q`5 cm`).toString(); // "10.05 m"
+ * ```
+ */
 export class Quantity {
     /** The magnitude (numeric part) of this Quantity value. Always in the base units (kg, m, s, etc.). */
     public get magnitude(): number {
         return this._magnitude;
     }
-    protected _dimensions: Dimensions;
+
+    /**
+     * The dimensions of this Quantity value.
+     * For example:
+     * - `5 kg⋅m` has dimensions of 'mass' (from kg) and 'distance' (from m)
+     * - `5 m³` has dimensions of 'distance³' (also known as volume)
+     * - `15.03` is a dimensionless number (no units)
+     *
+     * Note that dimensions ignores unit details: `15 ft` and `-3 m` both have identical dimensions (distance).
+     */
     public get dimensions(): Dimensions {
         return this._dimensions;
     }
+    protected _dimensions: Dimensions;
+
+    /** If set, only this many of the decimal digits of the magnitude are significant. */
     public readonly significantFigures: number | undefined;
+
     /** The uncertainty/error/tolerance that this value has. Always in the base units (kg, m, s, etc.). */
     public get plusMinus(): number | undefined {
         return this._plusMinus;
     }
     protected _plusMinus: number | undefined;
+
     /**
      * For a few units like "degC", "degF", and "gauge Pascals", we need to keep track of their offset from
      * the base units. (e.g. 0C = 273.15K). This is ONLY used within getWithUnits() and this field does not
@@ -90,17 +127,41 @@ export class Quantity {
         }
     }
 
-    /** Is this dimensionless (a pure number with no units)? */
+    /**
+     * Is this dimensionless (a pure number with no units)?
+     *
+     * ```ts
+     * new Quantity(15).isDimensionless // true
+     * new Quantity(15, {units: "m"}).isDimensionless // false
+     * ```
+     */
     public get isDimensionless(): boolean {
         return this.dimensions.isDimensionless;
     }
 
-    /** Does this quantity have the same dimensions as that one? */
+    /**
+     * Does this quantity have the same dimensions as that one?
+     *
+     * ```ts
+     * Q`10m`.sameDimensionsAs(Q`300 ft`)  // true (both distance)
+     * Q`10m`.sameDimensionsAs(Q`300 kg`)  // false (distance vs mass)
+     * Q`10m`.sameDimensionsAs(Q`10 m^2`)  // false (distance vs area)
+     * Q`30 N⋅m`.sameDimensionsAs(Q`-1 J`)  // true (both work)
+     * ```
+     */
     public sameDimensionsAs(other: Quantity): boolean {
         return this.dimensions.equalTo(other.dimensions);
     }
 
-    /** Is this Quantity exactly equal to another? */
+    /**
+     * Is this Quantity exactly equal to another?
+     *
+     * ```ts
+     * Q`15 m`.equals(Q`15m`)  // true
+     * Q`10 J`.equals(Q`10 N m`)  // true
+     * Q`10 J`.equals(Q`5 J`)  // false
+     * ```
+     */
     public equals(other: Quantity): boolean {
         return (
             this.sameDimensionsAs(other) &&
@@ -110,6 +171,16 @@ export class Quantity {
         );
     }
 
+    /**
+     * Compare two Quantity values (that have the same dimensions)
+     *
+     * ```ts
+     * [Q`5m`, Q`1 ft`, Q`3 mi`, Q`20 mm`].toSorted(Quantity.compare).map(q => q.toString())
+     * // [ "20 mm", "1 ft", "5 m", "3 mi" ]
+     * ```
+     *
+     * If you really need to, you can pass `ignoreUnits = true` to compare the magnitudes only.
+     */
     public static compare(a: Quantity, b: Quantity, ignoreUnits = false): 0 | 1 | -1 {
         if (!ignoreUnits) {
             if (!a._dimensions.equalTo(b._dimensions)) {
@@ -122,6 +193,13 @@ export class Quantity {
         return diff === 0 ? 0 : diff > 0 ? 1 : -1;
     }
 
+    /**
+     * Get this Quantity value as a standardized string.
+     *
+     * ```ts
+     * new Quantity(15, {units: "kg m s^-2"}).toString()  // "15 kg⋅m/s^2"
+     * ```
+     */
     toString(): string {
         const serialized = this.get();
         let r = serialized.significantFigures === undefined
@@ -161,7 +239,14 @@ export class Quantity {
         return r;
     }
 
-    /** Get the value of this (as a SerializedQuantity) using the specified units. */
+    /**
+     * Get the value of this (as a SerializedQuantity) using the specified units.
+     *
+     * Example: convert 10kg to pounds (approx 22 lb)
+     * ```ts
+     * new Quantity(10, {units: "kg"}).getWithUnits("lb")  // { magnitude: 22.046..., units: "lb" }
+     * ```
+     */
     public getWithUnits(units: string | ParsedUnit[]): SerializedQuantity {
         const converter = new Quantity(1, { units });
         if (!converter.sameDimensionsAs(this)) {
@@ -185,7 +270,14 @@ export class Quantity {
         return result;
     }
 
-    /** Get the details of this quantity, using the original unit representation if possible.  */
+    /**
+     * Get the details of this quantity, using the original unit representation if possible.
+     *
+     * ```ts
+     * new Quantity(10, {units: "N m"}).get()  // { magnitude: 10, units: "N⋅m" }
+     * new Quantity(10, {units: "ft"}).get()  // { magnitude: 10, units: "ft" }
+     * ```
+     */
     public get(): SerializedQuantity {
         if (this._unitHintSet) {
             const unitsToUse = this.pickUnitsFromList(this._unitHintSet);
@@ -195,7 +287,14 @@ export class Quantity {
         return this.getSI();
     }
 
-    /** Get the most compact SI representation for this quantity.  */
+    /**
+     * Get the most compact SI representation for this quantity.
+     *
+     * ```ts
+     * new Quantity(10, {units: "N m"}).getSI()  // { magnitude: 10, units: "J" }
+     * new Quantity(10, {units: "ft"}).getSI()  // { magnitude: 3.048, units: "m" }
+     * ```
+     */
     public getSI(): SerializedQuantity {
         const unitList = this.pickUnitsFromList([
             // Base units:

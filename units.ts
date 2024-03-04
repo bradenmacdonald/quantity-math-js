@@ -38,11 +38,15 @@ export const prefixes = Object.freeze(
 
 type Prefix = keyof typeof prefixes;
 
+/**
+ * Defines a Unit, like "kg" (kilograms), "W" (Watts), or "HP" (horsepower)
+ */
 export interface Unit {
-    /** Scale */
+    /** Scale (relative to SI base unit for these dimensions) */
     readonly s: number;
-    /** Dimensions */
+    /** Dimensions (e.g. 'distance' for meters, 'distance^3' for liters, or 'mass' for kilograms) */
     readonly d: Dimensions;
+    /** Offset: required for units where 0 value is different from 0 in the base SI unit (e.g. Farenheit) */
     readonly offset?: number;
     /** Can metric prefixes like k-, m-, M-, etc. be used with this unit? */
     readonly prefixable?: true;
@@ -62,6 +66,12 @@ const AREA_DIMENSIONS: Dimensions = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0, 0]);
 const INFO_DIMENSIONS: Dimensions = new Dimensions([0, 0, 0, 0, 0, 0, 0, 1, 0]);
 const PRSR_DIMENSIONS: Dimensions = new Dimensions([1, -1, -2, 0, 0, 0, 0, 0, 0]);
 
+/**
+ * List of all the units built in to quantity-math-js.
+ *
+ * In addition to all of these, you can also use custom units (anything starting
+ * with an underscore).
+ */
 export const builtInUnits = Object.freeze(
     {
         // Dimensionless:
@@ -170,6 +180,7 @@ export const builtInUnits = Object.freeze(
         "K": { s: 1e+0, d: TEMP_DIMENSION, prefixable: true },
         /** Difference in temperature, degrees Celcius */
         "deltaC": { s: 1e+0, d: TEMP_DIMENSION },
+        /** A specific temperature, in degrees Fahrenheit */
         "degF": { s: 5.555555555555556e-1, d: TEMP_DIMENSION, offset: 2.553722222222222e+2 },
         /** A specific temperature, in degrees Celcius, like "water freezes at 0°C"; not a relative temperature. */
         "degC": { s: 1e+0, d: TEMP_DIMENSION, offset: 2.7315e+2 },
@@ -404,9 +415,13 @@ export const builtInUnits = Object.freeze(
     } as const satisfies Record<string, Unit>,
 );
 
+/** The result of parsing a unit like "km^2" into its parts (prefix, unit, and power) */
 export interface ParsedUnit {
+    /** The SI prefix of this unit, if any. e.g. the "k" (kilo) in "km" (kilometers) */
     prefix?: Prefix;
+    /** The unit, e.g. "m" for meters or "_pax" for a custom "passengers" unit */
     unit: string;
+    /** The power (exponent) to which the unit is raised. Often this is just 1. */
     power: number;
 }
 

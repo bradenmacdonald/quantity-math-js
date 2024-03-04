@@ -11,6 +11,16 @@ const numBasicDimensions = 9;
 
 // TODO: add an angle dimension, like Boost and Mathematica do.
 
+/**
+ * The dimensions of a Quantity value.
+ * For example:
+ * - `5 kg⋅m` has dimensions of 'mass' (from kg) and 'distance' (from m)
+ * - `5 m^3` has dimensions of 'distance^3' (also known as volume)
+ * - `15.03` is a dimensionless number (no units)
+ *
+ * Note that dimensions ignores unit details: `15 ft` and `-3 m` both have identical dimensions (distance).
+ * All that this cares about is the *power* of the dimension, i.e. `m` vs. `m^2` vs. `m^-3`
+ */
 export class Dimensions {
     constructor(
         public readonly dimensions: [
@@ -183,4 +193,13 @@ export class Dimensions {
     }
 }
 
+/**
+ * A pure number with no dimensions.
+ *
+ * (e.g. "percent" or "parts per million" are both dimensionless pseudo-units - they have
+ * no mass, distance, time, or any other dimension inherent in the unit. Percent
+ * is just the pure number "0.01" and "parts per million" is "0.000001")
+ *
+ * Likewise an SI expression like "1 μm/m" is dimensionless after simplification.
+ */
 export const Dimensionless: Dimensions = new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0]);
