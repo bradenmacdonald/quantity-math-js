@@ -61,6 +61,19 @@ const x = new Quantity(5, { units: "kg^2⋅m^2⋅s^-4⋅A^-2" });
 x.getSI(); // { magnitude: 5, units: "kg/F" }
 ```
 
+## Syntactic Sugar
+
+If you prefer, there is a much more compact way to initialize `Quantity` instances: using the `Q` template helper. This
+is slightly less efficient and less capable, but far more readable and convenient in many cases.
+
+```ts
+import { Q } from "@bradenmacdonald/quantity-math-js";
+
+const force = Q`34.2 kg m/s^2`; // Shorter version of: new Quantity(34.2, {units: "kg m/s^2"})
+force.getSI(); // { magnitude: 34.2, units: "N" }
+force.multiply(Q`2 s^2`).toString(); // "68.4 kg⋅m"
+```
+
 ## Error/uncertainty/tolerance
 
 You can specify a "plus/minus" value (in the same units). Operations like addition and multiplication will preserve the
