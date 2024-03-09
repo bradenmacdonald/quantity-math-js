@@ -172,6 +172,28 @@ export class Quantity {
     }
 
     /**
+     * Is this Quantity approximately equal to another?
+     *
+     * Uses the plusMinus tolerance of this quantity value, or if no tolerance
+     * is set, it defaults to a relative tolerance of a hundredth of a percent.
+     */
+    public equalsApprox(other: Quantity): boolean {
+        if (!this.sameDimensionsAs(other)) return false;
+
+        const absDifference = Math.abs(this.magnitude - other.magnitude);
+
+        if (this.plusMinus !== undefined) {
+            return absDifference <= this.plusMinus;
+        } else {
+            if (this.magnitude === 0) {
+                return this.magnitude === other.magnitude;
+            }
+            const relativeTolerance = 0.0001;
+            return (absDifference / this.magnitude) <= relativeTolerance;
+        }
+    }
+
+    /**
      * Compare two Quantity values (that have the same dimensions)
      *
      * ```ts
