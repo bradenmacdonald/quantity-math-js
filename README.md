@@ -81,7 +81,7 @@ x.getSI(); // { magnitude: 5, units: "kg/F" }
 ## Syntactic Sugar
 
 If you prefer, there is a much more compact way to initialize `Quantity` instances: using the `Q` template helper. This
-is slightly less efficient and less capable, but far more readable and convenient in many cases.
+is slightly less efficient, but far more readable and convenient in many cases.
 
 ```ts
 import { Q } from "@bradenmacdonald/quantity-math-js";
@@ -89,6 +89,12 @@ import { Q } from "@bradenmacdonald/quantity-math-js";
 const force = Q`34.2 kg m/s^2`; // Shorter version of: new Quantity(34.2, {units: "kg m/s^2"})
 force.getSI(); // { magnitude: 34.2, units: "N" }
 force.multiply(Q`2 s^2`).toString(); // "68.4 kg⋅m"
+```
+
+You can also call it as a function, which acts like "parse quantity string":
+
+```ts
+const force = Q("34.2 kg m/s^2"); // new Quantity(34.2, {units: "kg m/s^2"})
 ```
 
 ## Error/uncertainty/tolerance
@@ -99,7 +105,7 @@ relative uncertainty, etc.).
 
 ```ts
 const x = new Quantity(4.52, { units: "cm", plusMinus: 0.02 }); // 4.52±0.02 cm
-const y = new Quantity(2.0, { units: "cm", plusMinus: 0.2 }); // 2±0.2 cm"
+const y = Q`2±0.2 cm`; // Or use the Q string syntax
 const z = x.multiply(y); // z = xy = 9.04 ± 0.944 cm²
 z.get(); // { magnitude: 9.04, units: "cm^2", plusMinus: 0.944 }
 z.toString(); // "9.0±0.9 cm^2" (toString() will automatically round the output)

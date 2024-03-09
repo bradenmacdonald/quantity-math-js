@@ -65,4 +65,9 @@ Deno.test("Constructing Quantity instances with Q`...` template", async (t) => {
     ) {
         await check(short, new Quantity(-.05123, { units: "kg⋅m/s^2" }));
     }
+
+    await check(`15.5 ± 0.2 kg`, new Quantity(15.5, { units: "kg", plusMinus: 0.2 }));
+    await check(`0.2±.01 g`, new Quantity(0.2, { units: "g", plusMinus: 0.01 }));
+    await check(`60±5 W`, new Quantity(60, { units: "W", plusMinus: 5 }));
+    await check(`+60±5.0000 W`, new Quantity(60, { units: "W", plusMinus: 5 }));
 });

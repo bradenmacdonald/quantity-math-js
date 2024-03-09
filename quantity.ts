@@ -176,6 +176,14 @@ export class Quantity {
      *
      * Uses the plusMinus tolerance of this quantity value, or if no tolerance
      * is set, it defaults to a relative tolerance of a hundredth of a percent.
+     *
+     * ```ts
+     * Q`60±5 W`.equalsApprox(Q`63 W`)  // true
+     * Q`60±0.05 W`.equalsApprox(Q`60.1 W`)  // false
+     * // Default tolerance of 0.01% when no ± plusMinus tolerance is specified:
+     * Q`100 W`.equalsApprox(Q`100.009 W`)  // true
+     * Q`100 W`.equalsApprox(Q`100.02 W`)  // false
+     * ```
      */
     public equalsApprox(other: Quantity): boolean {
         if (!this.sameDimensionsAs(other)) return false;
