@@ -191,6 +191,35 @@ export class Dimensions {
             this.customDimensionNames,
         );
     }
+
+    /** Use a nice string when logging this with Deno's console.log() etc. */
+    [Symbol.for("Deno.customInspect")](): string {
+        return "Dimensions" + this.toString();
+    }
+
+    /**
+     * Print this Dimensions object as a string (mostly useful for debugging).
+     *
+     * Example:
+     * ```ts
+     * new Dimensions([0,2,4,6,8,0,0,0,-3]).toString();
+     * // '[0,2,4,6,8,0,0,0,-3]'
+     * ```
+     *
+     * Example with a custom 'foo' dimension:
+     *
+     * ```ts
+     * new Dimensions([0,2,4,6,8,0,0,0,-3,7], ["foo"]).toString();
+     * // '[0,2,4,6,8,0,0,0,-3,foo:7]'
+     * ```
+     */
+    public toString(): string {
+        let str = "[" + this.dimensions.slice(0, numBasicDimensions).toString();
+        this.customDimensionNames.forEach((dimName, i) => {
+            str += `,${dimName}:${this.dimensions[numBasicDimensions + i]}`;
+        });
+        return str + "]";
+    }
 }
 
 /**

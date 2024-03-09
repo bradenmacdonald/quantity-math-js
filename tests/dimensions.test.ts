@@ -57,7 +57,7 @@ Deno.test(`Dimensions constructor`, async (t) => {
             );
             // Whereas this won't throw:
             // deno-fmt-ignore
-            new Dimensions([...baseDimensions, 1, 0, 1, 0], [ "a", "b", "c", "d"]);
+            new Dimensions([...baseDimensions, 1, 0, 1, 0], ["a", "b", "c", "d"]);
         },
     );
 
@@ -122,5 +122,23 @@ Deno.test(`Multiplying custom dimensions`, async (t) => {
         const c = a.multiply(b);
         assertEquals(c, new Dimensions([...baseDimensions, 1, 6, 8], ["bar", "foo", "tribble"]));
         assertEquals(c, b.multiply(a));
+    });
+});
+
+Deno.test(`toString`, async (t) => {
+    await t.step(`dimensionless`, () => {
+        assertEquals(new Dimensions([...baseDimensions]).toString(), "[0,0,0,0,0,0,0,0,0]");
+    });
+    await t.step(`[0,2,4,6,8,0,0,0,-3]`, () => {
+        assertEquals(new Dimensions([0, 2, 4, 6, 8, 0, 0, 0, -3]).toString(), "[0,2,4,6,8,0,0,0,-3]");
+    });
+    await t.step(`[0,2,4,6,8,0,0,0,-3,7] with 7 in a custom "foo" dimension`, () => {
+        assertEquals(new Dimensions([0, 2, 4, 6, 8, 0, 0, 0, -3, 7], ["foo"]).toString(), "[0,2,4,6,8,0,0,0,-3,foo:7]");
+    });
+    await t.step(`different custom dimensions (4)`, () => {
+        assertEquals(
+            new Dimensions([...baseDimensions, 1, 2, 0, -3], ["abc", "bar", "foo", "zzzzzzz"]).toString(),
+            "[0,0,0,0,0,0,0,0,0,abc:1,bar:2,foo:0,zzzzzzz:-3]",
+        );
     });
 });
