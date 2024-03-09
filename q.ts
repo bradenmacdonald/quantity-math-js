@@ -11,9 +11,11 @@ export function Q(strings: string | ReadonlyArray<string>, ...keys: unknown[]): 
             fullString += strings[i + 1];
         }
     }
-    const match = /([-+]?\d*\.?\d*)\s*(.*)/.exec(fullString);
+    const match = /([-+]?\d*\.?\d*)(\s*±\s*([\d\.]+))?\s*(.*)/.exec(fullString);
     if (match === null) throw new QuantityError(`Unable to parse Q template string: ${fullString}`);
     const magnitude = parseFloat(match[1]);
-    const units = match[2];
-    return new Quantity(magnitude, { units });
+    const plusMinusStr = match[3];
+    const plusMinus = plusMinusStr ? parseFloat(plusMinusStr) : undefined;
+    const units = match[4];
+    return new Quantity(magnitude, { units, plusMinus });
 }
