@@ -1,6 +1,6 @@
 import { Dimensionless, Dimensions } from "./dimensions.ts";
 import { QuantityError } from "./error.ts";
-import { getUnitData, ParsedUnit, parseUnits, prefixes, toUnitString } from "./units.ts";
+import { baseSIUnits, getUnitData, ParsedUnit, parseUnits, prefixes, toUnitString } from "./units.ts";
 
 /**
  * Simple data structure that holds all the key data of a Quantity instance.
@@ -296,34 +296,7 @@ export class Quantity {
      * ```
      */
     public getSI(): SerializedQuantity {
-        const unitList = this.pickUnitsFromList([
-            // Base units:
-            { unit: "g", prefix: "k" },
-            { unit: "m" },
-            { unit: "s" },
-            { unit: "K" },
-            { unit: "A" },
-            { unit: "mol" },
-            // {unit: "cd"},
-            { unit: "b" },
-            // Derived units:
-            { unit: "N" },
-            { unit: "Pa" },
-            { unit: "J" },
-            { unit: "W" },
-            { unit: "C" },
-            { unit: "V" },
-            { unit: "F" },
-            { unit: "ohm" },
-            { unit: "S" },
-            { unit: "Wb" },
-            { unit: "T" },
-            { unit: "H" },
-            // {unit: "lm"},
-            // {unit: "lx"},
-            // {unit: "Bq"},
-            // {unit: "Gy"},
-        ]);
+        const unitList = this.pickUnitsFromList(baseSIUnits);
         return this.getWithUnits(unitList);
     }
 
@@ -331,7 +304,7 @@ export class Quantity {
      * Internal method: given a list of possible units, pick the most compact subset
      * that can be used to represent this quantity.
      */
-    protected pickUnitsFromList(unitList: Omit<ParsedUnit, "power">[]): ParsedUnit[] {
+    protected pickUnitsFromList(unitList: ReadonlyArray<Omit<ParsedUnit, "power">>): ParsedUnit[] {
         // Convert unitList to a dimension Array
         const unitArray: Dimensions[] = unitList.map((u) => getUnitData(u.unit).d);
         // Loop through each dimension and create a list of unit list indexes that

@@ -425,6 +425,36 @@ export interface ParsedUnit {
     power: number;
 }
 
+/** The base SI units. */
+export const baseSIUnits: ReadonlyArray<Omit<ParsedUnit, "power">> = Object.freeze([
+    // Base units:
+    { unit: "g", prefix: "k" },
+    { unit: "m" },
+    { unit: "s" },
+    { unit: "K" },
+    { unit: "A" },
+    { unit: "mol" },
+    // {unit: "cd"},
+    { unit: "b" },
+    // Derived units:
+    { unit: "N" },
+    { unit: "Pa" },
+    { unit: "J" },
+    { unit: "W" },
+    { unit: "C" },
+    { unit: "V" },
+    { unit: "F" },
+    { unit: "ohm" },
+    { unit: "S" },
+    { unit: "Wb" },
+    { unit: "T" },
+    { unit: "H" },
+    // {unit: "lm"},
+    // {unit: "lx"},
+    // {unit: "Bq"},
+    // {unit: "Gy"},
+]);
+
 /**
  * Parse a single unit string, e.g. "km^2" -> {prefix: "k", unit: "m", power: 2}
  *
