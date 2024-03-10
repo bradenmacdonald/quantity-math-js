@@ -1,5 +1,5 @@
 import { assertEquals, AssertionError, assertThrows } from "@std/assert";
-import { Quantity, QuantityError, SerializedQuantity } from "../mod.ts";
+import { InvalidConversionError, Quantity, SerializedQuantity } from "../mod.ts";
 
 /**
  * Ensure that the actual number is very close to the expected numeric value.
@@ -38,15 +38,23 @@ Deno.test("Quantity conversions", async (t) => {
         orig: number,
         options: ConstructorParameters<typeof Quantity>[1] & { units: string },
         outUnits: string,
-        expected: Omit<SerializedQuantity, "units">,
+        expected: Omit<SerializedQuantity, "units"> & { units?: string },
     ) => {
         await t.step(`${orig} ${options.units} is ${expected.magnitude} ${outUnits}`, () => {
-            const q1 = new Quantity(orig, options);
-            const result = q1.getWithUnits(outUnits);
+            const q = new Quantity(orig, options);
+            const resultQuantity = q.convert(outUnits);
+            const result = resultQuantity.get();
             // Compare the magnitude (value) of the result, ignoring minor floating point rounding differences:
             assertAlmostEquals(result.magnitude, expected.magnitude);
             // Compare result and expected, but ignoring the magnitude:
             assertEquals(result, { units: outUnits, ...expected, magnitude: result.magnitude });
+
+            // Test backwards compatibility with older .getWithUnits() API:
+            const oldResult = q.getWithUnits(outUnits);
+            assertAlmostEquals(oldResult.magnitude, expected.magnitude);
+            // The old API returned the units with custom spacing, left unchanged.
+            // Whereas the new API's result standarizes the format of 'units'
+            assertEquals(oldResult, { ...expected, units: outUnits, magnitude: result.magnitude });
         });
     };
 
@@ -62,12 +70,12 @@ Deno.test("Quantity conversions", async (t) => {
     await check(100, { units: "km/h" }, "mi/h", { magnitude: 62.137119224 });
     // Mass:
     await check(500, { units: "g" }, "kg", { magnitude: 0.5 });
-    await check(500, { units: "g" }, "s^2 N / m", { magnitude: 0.5 }); // 500 g = 0.5 kg = 0.5 (kg m / s^2) * s^2 / m
+    await check(500, { units: "g" }, "s^2 N / m", { magnitude: 0.5, units: "s^2⋅N/m" }); // 500 g = 0.5 kg = 0.5 (kg m / s^2) * s^2 / m
     await check(10, { units: "s^2 N / m" }, "g", { magnitude: 10_000 });
     // Mass can be expressed in Newton-hours^2 per foot.
     // This is obviously crazy but stress tests the conversion code effectively.
-    await check(500, { units: "g" }, "N h^2 / ft", { magnitude: 1.175925925925926e-8 });
-    await check(15, { units: "N h^2 / ft" }, "g", { magnitude: 637795275590.5511 });
+    await check(500, { units: "g" }, "N⋅h^2/ft", { magnitude: 1.175925925925926e-8 });
+    await check(15, { units: "N⋅h^2/ft" }, "g", { magnitude: 637795275590.5511 });
     // Time:
     await check(500, { units: "ms" }, "s", { magnitude: 0.5 });
     await check(120, { units: "s" }, "min", { magnitude: 2 });
@@ -143,32 +151,49 @@ Deno.test("Quantity conversions", async (t) => {
     await check(1, { units: "C" }, "A⋅s", { magnitude: 1 });
     await check(1, { units: "mAh" }, "mA⋅h", { magnitude: 1 }); // amp hour
     await check(1, { units: "Ah" }, "C", { magnitude: 3600 });
-    await check(1, { units: "V" }, "kg⋅m^2 / A⋅s^3", { magnitude: 1 });
-    await check(1, { units: "ohm" }, "kg⋅m^2 / A^2⋅s^3", { magnitude: 1 });
-    await check(1, { units: "F" }, "s^4⋅A^2 / kg^1⋅m^2", { magnitude: 1 });
-    await check(1, { units: "H" }, "kg⋅m^2 / s^2⋅A^2", { magnitude: 1 });
+    await check(1, { units: "V" }, "kg⋅m^2/A⋅s^3", { magnitude: 1 });
+    await check(1, { units: "ohm" }, "kg⋅m^2/A^2⋅s^3", { magnitude: 1 });
+    await check(1, { units: "F" }, "s^4⋅A^2 / kg^1⋅m^2", { magnitude: 1, units: "s^4⋅A^2/kg⋅m^2" });
+    await check(1, { units: "H" }, "kg⋅m^2/s^2⋅A^2", { magnitude: 1 });
     await check(1, { units: "S" }, "ohm^-1", { magnitude: 1 });
-    await check(1, { units: "Wb" }, "kg⋅m^2 / s^2⋅A^1", { magnitude: 1 });
-    await check(1, { units: "T" }, "Wb / m^2", { magnitude: 1 });
+    await check(1, { units: "Wb" }, "kg⋅m^2/s^2⋅A", { magnitude: 1 });
+    await check(1, { units: "T" }, "Wb / m^2", { magnitude: 1, units: "Wb/m^2" }); // output units have different spacing
     // Misc
-    await check(1, { units: "M" }, "mol / L", { magnitude: 1 }); // molar concentration
+    await check(1, { units: "M" }, "mol / L", { magnitude: 1, units: "mol/L" }); // molar concentration
     await check(1, { units: "Hz" }, "s^-1", { magnitude: 1 }); // Hertz
 
     await t.step("invalid conversions", () => {
-        assertThrows(
-            () => {
-                new Quantity(3, { units: "kg" }).getWithUnits("m");
-            },
-            QuantityError,
-            "Cannot convert units that aren't compatible.",
-        );
-        assertThrows(
-            () => {
-                new Quantity(1, { units: "day" }).getWithUnits("kg");
-            },
-            QuantityError,
-            "Cannot convert units that aren't compatible.",
-        );
+        assertThrows(() => {
+            new Quantity(3, { units: "kg" }).convert("m");
+        }, InvalidConversionError);
+        assertThrows(() => {
+            new Quantity(3, { units: "kg" }).getWithUnits("m");
+        }, InvalidConversionError);
+        assertThrows(() => {
+            new Quantity(1, { units: "day" }).convert("kg");
+        }, InvalidConversionError);
+        assertThrows(() => {
+            new Quantity(1, { units: "day" }).getWithUnits("kg");
+        }, InvalidConversionError);
+        assertThrows(() => {
+            new Quantity(1, { units: "A" }).convert("s/C");
+        }, InvalidConversionError);
+        assertThrows(() => {
+            new Quantity(1, { units: "A" }).convert("C s");
+        }, InvalidConversionError);
+    });
+
+    await t.step(".getWithUnits() backwards compatibility", () => {
+        const requestedUnitStr = "s^4⋅A^2 / kg^1⋅m^2";
+        assertEquals(new Quantity(1, { units: "F" }).getWithUnits(requestedUnitStr), {
+            magnitude: 1,
+            units: requestedUnitStr,
+        });
+        // Compare to the new API result:
+        assertEquals(new Quantity(1, { units: "F" }).convert(requestedUnitStr).get(), {
+            magnitude: 1,
+            units: "s^4⋅A^2/kg⋅m^2", // no spaces, no ^1 power specified
+        });
     });
 });
 

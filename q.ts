@@ -1,7 +1,7 @@
 import { Quantity } from "./quantity.ts";
 import { QuantityError } from "./error.ts";
 
-export function Q(strings: string | ReadonlyArray<string>, ...keys: unknown[]): Quantity {
+export function Q(strings: string | readonly string[], ...keys: unknown[]): Quantity {
     let fullString: string;
     if (typeof strings == "string") {
         fullString = strings;

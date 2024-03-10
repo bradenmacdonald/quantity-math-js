@@ -420,6 +420,14 @@ export const builtInUnits = Object.freeze(
     } as const satisfies Record<string, Unit>,
 );
 
+/** A unit that the user wants to use. */
+export interface PreferredUnit {
+    /** The SI prefix of this unit, if any. e.g. the "k" (kilo) in "km" (kilometers) */
+    prefix?: Prefix;
+    /** The unit, e.g. "m" for meters or "_pax" for a custom "passengers" unit */
+    unit: string;
+}
+
 /** The result of parsing a unit like "km^2" into its parts (prefix, unit, and power) */
 export interface ParsedUnit {
     /** The SI prefix of this unit, if any. e.g. the "k" (kilo) in "km" (kilometers) */
@@ -431,7 +439,7 @@ export interface ParsedUnit {
 }
 
 /** The base SI units. */
-export const baseSIUnits: ReadonlyArray<Omit<ParsedUnit, "power">> = Object.freeze([
+export const baseSIUnits: readonly PreferredUnit[] = Object.freeze([
     // Base units:
     { unit: "g", prefix: "k" },
     { unit: "m" },
@@ -542,7 +550,7 @@ export function parseUnits(
 /**
  * Convert a parsed unit array, e.g. from parseUnits(), back to a string like "kg⋅m/s^2"
  */
-export function toUnitString(units: ParsedUnit[]): string {
+export function toUnitString(units: readonly ParsedUnit[]): string {
     const numerator: string[] = [];
     const denominator: string[] = [];
     for (const u of units) {

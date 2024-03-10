@@ -13,13 +13,13 @@ Deno.bench("Quantity conversions - quantity-math-js", { group: "conversion", bas
     const e = d.multiply(Q`0.1 s^-1`); // 1 kg * m / s^2 (= 1 N)
     const f = e.add(Q`5.5 N`);
     const g = f.multiply(Q`10`).add(Q`5 N`).add(Q`-20 N`).multiply(Q`2`);
-    const h = g.getSI();
-    if (`${h.magnitude} ${h.units}` !== "100 N") throw new Error(`Got ${h.toString()} unexpectedly.`);
+    const h = g.toSI();
+    if (h.toString() !== "100 N") throw new Error(`Got ${h.toString()} unexpectedly.`);
 
     // And some crazy conversion:
     const orig = Q`500 uF`;
-    const converted = orig.getWithUnits("h⋅s^3⋅A^2/lb⋅m⋅ft");
-    if (`${converted.magnitude} ${converted.units}` !== "1.920207699666667e-8 h⋅s^3⋅A^2/lb⋅m⋅ft") {
+    const converted = orig.convert("h⋅s^3⋅A^2/lb⋅m⋅ft");
+    if (converted.toString() !== "1.920207699666667e-8 h⋅s^3⋅A^2/lb⋅m⋅ft") {
         throw new Error(`Got ${converted.toString()} unexpectedly.`);
     }
 });

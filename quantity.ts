@@ -1,6 +1,6 @@
 import { Dimensionless, Dimensions } from "./dimensions.ts";
-import { QuantityError } from "./error.ts";
-import { baseSIUnits, getUnitData, ParsedUnit, parseUnits, prefixes, toUnitString } from "./units.ts";
+import { InvalidConversionError, QuantityError } from "./error.ts";
+import { baseSIUnits, getUnitData, ParsedUnit, parseUnits, PreferredUnit, prefixes, toUnitString } from "./units.ts";
 
 /**
  * Simple data structure that holds all the key data of a Quantity instance.
@@ -14,8 +14,8 @@ export interface SerializedQuantity {
     units: string;
 }
 
-// Private constructor parameter to pass '_unitHintSet' values.
-const setUnitHintSet = Symbol("unitHintSet");
+/** Private constructor parameter to pass '_unitOutput' values. */
+const setUnitOutput = Symbol("setUnitOutput");
 
 /**
  * Quantity - a value with dimensions (units)
@@ -66,30 +66,29 @@ export class Quantity {
 
     /**
      * For a few units like "degC", "degF", and "gauge Pascals", we need to keep track of their offset from
-     * the base units. (e.g. 0C = 273.15K). This is ONLY used within getWithUnits() and this field does not
+     * the base units. (e.g. 0C = 273.15K). This is ONLY used within `get()` and this field does not
      * need to be preserved when cloning a Quantity or doing math with Quantities, because the offset is
      * already applied within the constructor, which converts everything to non-offset base units.
      */
     protected readonly _offsetUsed: number | undefined;
     /**
-     * Units that were used when constructing or deriving this Quantity (if known), to use by default when serializing it.
-     * The 'power' values of this are always ignored and may be omitted - only the prefixes and units are used.
+     * Units to use instead of the base units, when displaying this value.
      */
-    protected _unitHintSet: ParsedUnit[] | undefined;
+    protected readonly _unitOutput: readonly ParsedUnit[] | undefined;
 
     constructor(
         protected _magnitude: number,
         options: {
             dimensions?: Dimensions;
-            units?: string | ParsedUnit[];
+            units?: string | readonly ParsedUnit[];
             /**
              * If set, only this many of the decimal digits of the magnitude are significant.
              */
             significantFigures?: number;
             /** Allowed uncertainty/error/tolerance in this measurement. Must be using the same units as the magnitude. */
             plusMinus?: number;
-            /** Internal use only - set the _unitHintSet on this newly constructed Quantity */
-            [setUnitHintSet]?: ParsedUnit[];
+            /** Internal use only - set the _unitOutput on this newly constructed Quantity */
+            [setUnitOutput]?: readonly ParsedUnit[];
         } = {},
     ) {
         this.significantFigures = options.significantFigures;
@@ -98,8 +97,10 @@ export class Quantity {
             if (options.dimensions) {
                 throw new QuantityError(`You can specify units or dimensions, but not both.`);
             }
-            const units: ParsedUnit[] = typeof options.units === "string" ? parseUnits(options.units) : options.units;
-            this._unitHintSet = units;
+            const units: readonly ParsedUnit[] = typeof options.units === "string"
+                ? parseUnits(options.units)
+                : options.units;
+            this._unitOutput = units;
             this._dimensions = Dimensionless;
             for (const u of units) {
                 const unitData = getUnitData(u.unit);
@@ -115,13 +116,15 @@ export class Quantity {
                         // e.g. "50 °C per kilometer" doesn't make any sense, but "50 ΔC per kilometer" could make sense.
                     }
                     this._magnitude += unitData.offset;
-                    // We need to track the offset for the getWithUnits() method to be able to do conversions properly.
+                    // We need to track the offset for the get() method to be able to do conversions properly.
                     this._offsetUsed = unitData.offset;
                 }
             }
         } else if (options.dimensions) {
             this._dimensions = options.dimensions;
-            this._unitHintSet = options[setUnitHintSet];
+            this._unitOutput = options[setUnitOutput];
+            // Normalize the _unitOutput value to never be an empty array:
+            if (this._unitOutput?.length === 0) this._unitOutput = undefined;
         } else {
             this._dimensions = Dimensionless;
         }
@@ -238,6 +241,26 @@ export class Quantity {
         }
         return r;
     }
+    /**
+     * Convert this Quantity to a different (compatible) unit.
+     *
+     * Example: convert 10kg to pounds (approx 22 lb)
+     * ```ts
+     * new Quantity(10, {units: "kg"}).convert("lb")  // Quantity(22.046..., { units: "lb" })
+     * ```
+     */
+    public convert(units: string | ParsedUnit[]): Quantity {
+        const unitsNormalized: ParsedUnit[] = typeof units == "string" ? (units ? parseUnits(units) : []) : units;
+        // First do some validation:
+        let dimensions = Dimensionless;
+        for (const u of unitsNormalized) {
+            dimensions = dimensions.multiply(getUnitData(u.unit).d.pow(u.power));
+        }
+        if (!this._dimensions.equalTo(dimensions)) {
+            throw new InvalidConversionError();
+        }
+        return this._clone({ newUnitOutput: unitsNormalized });
+    }
 
     /**
      * Get the value of this (as a SerializedQuantity) using the specified units.
@@ -246,27 +269,13 @@ export class Quantity {
      * ```ts
      * new Quantity(10, {units: "kg"}).getWithUnits("lb")  // { magnitude: 22.046..., units: "lb" }
      * ```
+     *
+     * @deprecated Use `.convert(units).get()` instead
      */
     public getWithUnits(units: string | ParsedUnit[]): SerializedQuantity {
-        const converter = new Quantity(1, { units });
-        if (!converter.sameDimensionsAs(this)) {
-            throw new QuantityError("Cannot convert units that aren't compatible.");
-        }
-        if (converter._offsetUsed) {
-            // For units of C/F temperature or "gauge Pascals" that have an offset, undo that offset
-            // so that the converter represents the unit quantity.
-            converter._magnitude -= converter._offsetUsed;
-        }
-        const result: SerializedQuantity = {
-            magnitude: (this._magnitude - (converter._offsetUsed ?? 0)) / converter._magnitude,
-            units: typeof units === "string" ? units : toUnitString(units),
-        };
-        if (this.significantFigures) {
-            result.significantFigures = this.significantFigures;
-        }
-        if (this.plusMinus) {
-            result.plusMinus = this.plusMinus / converter.magnitude;
-        }
+        const result = this.convert(units).get();
+        // getWithUnits() always returned the unit string as passed in, un-normalized:
+        result.units = typeof units === "string" ? units : toUnitString(units);
         return result;
     }
 
@@ -279,12 +288,26 @@ export class Quantity {
      * ```
      */
     public get(): SerializedQuantity {
-        if (this._unitHintSet) {
-            const unitsToUse = this.pickUnitsFromList(this._unitHintSet);
-            return this.getWithUnits(unitsToUse);
+        const unitsForResult: readonly ParsedUnit[] = this._unitOutput ?? this.pickUnitsFromList(baseSIUnits);
+        const converter = new Quantity(1, { units: unitsForResult });
+
+        if (converter._offsetUsed) {
+            // For units of C/F temperature or "gauge Pascals" that have an offset, undo that offset
+            // so that the converter represents the unit quantity.
+            converter._magnitude -= converter._offsetUsed;
         }
-        // Fall back to SI units if we can't use the units in the "hint set".
-        return this.getSI();
+        const result: SerializedQuantity = {
+            magnitude: (this._magnitude - (converter._offsetUsed ?? 0)) / converter._magnitude,
+            units: toUnitString(unitsForResult),
+        };
+        if (this.significantFigures) {
+            // TODO: remove this
+            result.significantFigures = this.significantFigures;
+        }
+        if (this.plusMinus) {
+            result.plusMinus = this.plusMinus / converter.magnitude;
+        }
+        return result;
     }
 
     /**
@@ -296,62 +319,36 @@ export class Quantity {
      * ```
      */
     public getSI(): SerializedQuantity {
-        const unitList = this.pickUnitsFromList(baseSIUnits);
-        return this.getWithUnits(unitList);
+        return this.toSI().get();
+    }
+
+    /**
+     * Ensure that this Quantity is using SI units, with the most compact
+     * representation possible.
+     *
+     * ```ts
+     * new Quantity(10, {units: "ft"}).toSI().toString() // "3.048 m"
+     * new Quantity(10, {units: "N m"}).toString()  // "10 N⋅m"
+     * new Quantity(10, {units: "N m"}).toSI().toString()  // "10 J"
+     * ```
+     */
+    public toSI(): Quantity {
+        if (this._unitOutput) {
+            return this._clone({ newUnitOutput: undefined });
+        }
+        return this;
     }
 
     /**
      * Internal method: given a list of possible units, pick the most compact subset
      * that can be used to represent this quantity.
      */
-    protected pickUnitsFromList(unitList: ReadonlyArray<Omit<ParsedUnit, "power">>): ParsedUnit[] {
+    protected pickUnitsFromList(unitList: readonly PreferredUnit[]): ParsedUnit[] {
         // Convert unitList to a dimension Array
         const unitArray: Dimensions[] = unitList.map((u) => getUnitData(u.unit).d);
         // Loop through each dimension and create a list of unit list indexes that
         // are the best match for the dimension
-        const useUnits: number[] = [];
-        const useUnitsPower: number[] = [];
-        let remainder = this._dimensions;
-        while (remainder.dimensionality > 0) {
-            let bestIdx = -1;
-            let bestInv = 0;
-            let bestRemainder = remainder;
-            for (let unitIdx = 0; unitIdx < unitList.length; unitIdx++) {
-                const unitDimensions = unitArray[unitIdx];
-                if (unitDimensions.isDimensionless) continue; // Dimensionless units get handled later...
-                for (let isInv = 1; isInv >= -1; isInv -= 2) {
-                    const newRemainder = remainder.multiply(isInv === 1 ? unitDimensions.invert() : unitDimensions);
-                    // If this unit reduces the dimensionality more than the best candidate unit yet found,
-                    // or reduces the dimensionality by the same amount but is in the numerator rather than denominator:
-                    if (
-                        (newRemainder.dimensionality < bestRemainder.dimensionality) ||
-                        (newRemainder.dimensionality === bestRemainder.dimensionality && isInv === 1 && bestInv === -1)
-                    ) {
-                        bestIdx = unitIdx;
-                        bestInv = isInv;
-                        bestRemainder = newRemainder;
-                        break; // Tiny optimization: if this unit is better than bestRemainder, we don't need to check its inverse
-                    }
-                }
-            }
-            // Check to make sure that progress is being made towards remainder = 0
-            // if no more progress is being made then the provided units don't span
-            // this unit, throw an error.
-            if (bestRemainder.dimensionality >= remainder.dimensionality) {
-                throw new QuantityError(`Cannot represent this quantity with the supplied units`);
-            }
-            // Check if the new best unit already in the set of numerator or
-            // denominator units. If it is, increase the power of that unit, if it
-            // is not, then add it.
-            const existingIdx = useUnits.indexOf(bestIdx);
-            if (existingIdx == -1) {
-                useUnits.push(bestIdx);
-                useUnitsPower.push(bestInv);
-            } else {
-                useUnitsPower[existingIdx] += bestInv;
-            }
-            remainder = bestRemainder;
-        }
+        const { useUnits, useUnitsPower } = this.pickUnitsFromListIterativeReduction(unitArray);
 
         // Special case to handle dimensionless units like "%" that we may actually want to use:
         if (unitList.length === 1 && useUnits.length === 0) {
@@ -375,33 +372,80 @@ export class Quantity {
     }
 
     /**
+     * Internal method: given a list of possible units, pick the most compact subset
+     * that can be used to represent this quantity.
+     *
+     * This algorithm doesn't always succeed (e.g. it can't pick "C/s" from [C, s] to
+     * represent A - amperes), but it will work if given a good basis set (e.g. the
+     * SI base units), and it does produce an optimal result in most cases.
+     *
+     * For challenging cases like picking Coulombs per second to represent 1 Ampere,
+     * from a list of units that has [Coulombs, seconds] only, it's necessary to
+     * use a different algorithm, like expressing the problem as a set of linear
+     * equations and using Gauss–Jordan elimination to solve for the coefficients.
+     */
+    protected pickUnitsFromListIterativeReduction(
+        unitArray: Dimensions[],
+    ): { useUnits: number[]; useUnitsPower: number[] } {
+        // Loop through each dimension and create a list of unit list indexes that
+        // are the best match for the dimension
+        const useUnits: number[] = [];
+        const useUnitsPower: number[] = [];
+        let remainder = this._dimensions;
+        while (remainder.dimensionality > 0) {
+            let bestIdx = -1;
+            let bestInv = 0;
+            let bestRemainder = remainder;
+            for (let unitIdx = 0; unitIdx < unitArray.length; unitIdx++) {
+                const unitDimensions = unitArray[unitIdx];
+                if (unitDimensions.isDimensionless) continue; // skip dimensionless units
+                for (let isInv = 1; isInv >= -1; isInv -= 2) {
+                    const newRemainder = remainder.multiply(isInv === 1 ? unitDimensions.invert() : unitDimensions);
+                    // If this unit reduces the dimensionality more than the best candidate unit yet found,
+                    // or reduces the dimensionality by the same amount but is in the numerator rather than denominator:
+                    if (
+                        (newRemainder.dimensionality < bestRemainder.dimensionality) ||
+                        (newRemainder.dimensionality === bestRemainder.dimensionality && isInv === 1 && bestInv === -1)
+                    ) {
+                        bestIdx = unitIdx;
+                        bestInv = isInv;
+                        bestRemainder = newRemainder;
+                        break; // Tiny optimization: if this unit is better than bestRemainder, we don't need to check its inverse
+                    }
+                }
+            }
+            // Check to make sure that progress is being made towards remainder = 0
+            // If no more progress is being made then we won't be able to find a compatible unit set from this list.
+            if (bestRemainder.dimensionality >= remainder.dimensionality) {
+                throw new InvalidConversionError();
+            }
+            // Check if the new best unit already in the set of numerator or
+            // denominator units. If it is, increase the power of that unit, if it
+            // is not, then add it.
+            const existingIdx = useUnits.indexOf(bestIdx);
+            if (existingIdx == -1) {
+                useUnits.push(bestIdx);
+                useUnitsPower.push(bestInv);
+            } else {
+                useUnitsPower[existingIdx] += bestInv;
+            }
+            remainder = bestRemainder;
+        }
+
+        return { useUnits, useUnitsPower };
+    }
+
+    /**
      * Clone this Quantity. This is an internal method, because as far as the public API allows,
      * Quantity objects are immutable, so there is no need to use this API publicly.
      */
-    protected _clone(): Quantity {
+    protected _clone(options: { newUnitOutput?: readonly ParsedUnit[] | undefined } = {}): Quantity {
         return new Quantity(this._magnitude, {
             dimensions: this._dimensions,
             plusMinus: this._plusMinus,
             significantFigures: this.significantFigures,
-            [setUnitHintSet]: this._unitHintSet,
+            [setUnitOutput]: "newUnitOutput" in options ? options.newUnitOutput : this._unitOutput,
         });
-    }
-
-    /**
-     * Internal helper method: when doing a mathematical operation involving two Quantities, use this to combine their
-     * "unit hints" so that the resulting Quantity object will "remember" the preferred unit for the result.
-     */
-    protected static combineUnitHints(
-        h1: ParsedUnit[] | undefined,
-        h2: ParsedUnit[] | undefined,
-    ): ParsedUnit[] | undefined {
-        const unitHintSet: ParsedUnit[] = [];
-        for (const u of (h1 ?? []).concat(h2 ?? [])) {
-            if (!unitHintSet.find((eu) => eu.unit === u.unit)) {
-                unitHintSet.push(u);
-            }
-        }
-        return unitHintSet.length ? unitHintSet : undefined;
     }
 
     /** Add this to another Quantity, returning the result as a new Quantity object */
@@ -429,8 +473,8 @@ export class Quantity {
             dimensions: this._dimensions,
             plusMinus,
             significantFigures,
-            // Preserve the "unit hints" so that the new Quantity will remember what units were used:
-            [setUnitHintSet]: Quantity.combineUnitHints(this._unitHintSet, y._unitHintSet),
+            // Preserve the output units, so that the new Quantity will remember what units were requested:
+            [setUnitOutput]: this._unitOutput,
         });
     }
 
@@ -471,13 +515,43 @@ export class Quantity {
 
         // Multiply the magnitude:
         this._magnitude *= y._magnitude;
-        // Add in the additional unit hints, if applicable:
-        this._unitHintSet = Quantity.combineUnitHints(this._unitHintSet, y._unitHintSet);
+
+        // This internal version of _multiply() doesn't change _unitOutput, but the
+        // public version will adjust it when needed.
     }
 
     /** Multiply this Quantity by another Quantity and return the new result */
     public multiply(y: Quantity): Quantity {
-        const result = this._clone();
+        // Figure out what preferred unit should be used for the new Quantity, if relevant:
+        let newUnitOutput: readonly ParsedUnit[] | undefined = undefined;
+        if (this._unitOutput && y._unitOutput) {
+            const xUnits = this._unitOutput.map((u) => ({ ...u, ...getUnitData(u.unit) }));
+            const yUnits = y._unitOutput.map((u) => ({ ...u, ...getUnitData(u.unit) }));
+            if (xUnits.length === 1 && xUnits[0].d.isDimensionless) {
+                newUnitOutput = y._unitOutput;
+            } else if (yUnits.length === 1 && yUnits[0].d.isDimensionless) {
+                newUnitOutput = this._unitOutput;
+            } else {
+                // modify xUnits by combining yUnits into it
+                for (const u of yUnits) {
+                    const xEntry = xUnits.find((x) => x.d.equalTo(u.d));
+                    if (xEntry !== undefined) {
+                        xEntry.power += u.power;
+                    } else {
+                        xUnits.push(u);
+                    }
+                }
+                newUnitOutput = xUnits.filter((u) => u.power !== 0).map((x) => ({
+                    unit: x.unit,
+                    power: x.power,
+                    prefix: x.prefix,
+                }));
+            }
+        } else {
+            newUnitOutput = this._unitOutput ?? y._unitOutput;
+        }
+        // Do the actual multiplication of the magnitude and dimensions:
+        const result = this._clone({ newUnitOutput });
         result._multiply(y);
         return result;
     }
