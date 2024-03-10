@@ -1,5 +1,37 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, AssertionError, assertThrows } from "@std/assert";
 import { Quantity, QuantityError, SerializedQuantity } from "../mod.ts";
+
+/**
+ * Ensure that the actual number is very close to the expected numeric value.
+ * This is an improved version of Deno std's assertAlmostEquals - this version
+ * uses a relative tolerance rather than an absolute one.
+ *
+ * https://github.com/denoland/deno_std/pull/4460
+ */
+export function assertAlmostEquals(
+    actual: number,
+    expected: number,
+    tolerance?: number,
+    msg?: string,
+) {
+    if (Object.is(actual, expected)) {
+        return;
+    }
+    const delta = Math.abs(expected - actual);
+    if (tolerance === undefined) {
+        tolerance = isFinite(expected) ? expected * 1e-7 : 1e-7;
+    }
+    if (delta <= tolerance) {
+        return;
+    }
+
+    const msgSuffix = msg ? `: ${msg}` : ".";
+    const f = (n: number) => Number.isInteger(n) ? n : n.toExponential();
+    throw new AssertionError(
+        `Expected actual: "${f(actual)}" to be close to "${f(expected)}": \
+  delta "${f(delta)}" is greater than "${f(tolerance)}"${msgSuffix}`,
+    );
+}
 
 Deno.test("Quantity conversions", async (t) => {
     const check = async (
@@ -11,9 +43,10 @@ Deno.test("Quantity conversions", async (t) => {
         await t.step(`${orig} ${options.units} is ${expected.magnitude} ${outUnits}`, () => {
             const q1 = new Quantity(orig, options);
             const result = q1.getWithUnits(outUnits);
-            // Do some rounding so we ignore minor differences that come from binary arithmetic issues:
-            result.magnitude = Math.round(result.magnitude * 1_000_000_000) / 1_000_000_000;
-            assertEquals(result, { ...expected, units: outUnits });
+            // Compare the magnitude (value) of the result, ignoring minor floating point rounding differences:
+            assertAlmostEquals(result.magnitude, expected.magnitude);
+            // Compare result and expected, but ignoring the magnitude:
+            assertEquals(result, { units: outUnits, ...expected, magnitude: result.magnitude });
         });
     };
 
@@ -29,6 +62,12 @@ Deno.test("Quantity conversions", async (t) => {
     await check(100, { units: "km/h" }, "mi/h", { magnitude: 62.137119224 });
     // Mass:
     await check(500, { units: "g" }, "kg", { magnitude: 0.5 });
+    await check(500, { units: "g" }, "s^2 N / m", { magnitude: 0.5 }); // 500 g = 0.5 kg = 0.5 (kg m / s^2) * s^2 / m
+    await check(10, { units: "s^2 N / m" }, "g", { magnitude: 10_000 });
+    // Mass can be expressed in Newton-hours^2 per foot.
+    // This is obviously crazy but stress tests the conversion code effectively.
+    await check(500, { units: "g" }, "N h^2 / ft", { magnitude: 1.175925925925926e-8 });
+    await check(15, { units: "N h^2 / ft" }, "g", { magnitude: 637795275590.5511 });
     // Time:
     await check(500, { units: "ms" }, "s", { magnitude: 0.5 });
     await check(120, { units: "s" }, "min", { magnitude: 2 });
@@ -43,6 +82,8 @@ Deno.test("Quantity conversions", async (t) => {
     await check(2, { units: "ka" }, "yr", { magnitude: 2000 });
     await check(3, { units: "Ma" }, "yr", { magnitude: 3_000_000 });
     await check(4, { units: "Ga" }, "yr", { magnitude: 4_000_000_000 });
+    // Time squared:
+    await check(1, { units: "h^2" }, "s^2", { magnitude: 3600 * 3600 });
     // Temperature:
     await check(5, { units: "K" }, "deltaC", { magnitude: 5 });
     await check(100, { units: "degF" }, "degC", { magnitude: 37.777777778 });
