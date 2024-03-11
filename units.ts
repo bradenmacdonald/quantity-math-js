@@ -342,21 +342,21 @@ export const builtInUnits = Object.freeze(
         "Ah": { s: 3.6e+3, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0, 0]), prefixable: true },
         // "e": { s: 1.602176634e-19, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0]) },
         /** Volt */
-        "V": { s: 1, d: new Dimensions([1, 2, -3, 0, -1, 0, 0, 0, 0]) },
+        "V": { s: 1, d: new Dimensions([1, 2, -3, 0, -1, 0, 0, 0, 0]), prefixable: true },
         /** Ohm/Ω: Derived SI unit for electrical resistance */
         "ohm": { s: 1, d: new Dimensions([1, 2, -3, 0, -2, 0, 0, 0, 0]) },
         /** Farad: Derived SI unit of electrical capacitance */
-        "F": { s: 1e+0, d: new Dimensions([-1, -2, 4, 0, 2, 0, 0, 0, 0]) },
+        "F": { s: 1e+0, d: new Dimensions([-1, -2, 4, 0, 2, 0, 0, 0, 0]), prefixable: true },
         /** Henry: Derived SI unit for inductance */
-        "H": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -2, 0, 0, 0, 0]) },
+        "H": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -2, 0, 0, 0, 0]), prefixable: true },
         /** Siemens: Derived SI unit for electrical conductance, equal to 1 / ohm */
-        "S": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0, 0]) },
+        "S": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0, 0]), prefixable: true },
         // "mho": { s: 1e+0, d: new Dimensions([-1, -2, 3, 0, 2, 0, 0, 0, 0]) },
         /** Weber: SI unit for magnetic flux defined as 1 kg m^2 / (s^2 A) */
-        "Wb": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0, 0]) },
+        "Wb": { s: 1e+0, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0, 0]), prefixable: true },
         // "Mx": { s: 1e-8, d: new Dimensions([1, 2, -2, 0, -1, 0, 0, 0, 0]) },
         /** Tesla: SI unit for magnetic flux density defined as 1 Wb / m^2 */
-        "T": { s: 1e+0, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0, 0]) },
+        "T": { s: 1e+0, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0, 0]), prefixable: true },
         // "Gs": { s: 1e-4, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0, 0]) },
         // "gs": { s: 1e-4, d: new Dimensions([1, 0, -2, 0, -1, 0, 0, 0, 0]) },
         // "Fr": { s: 3.3356409519815207e-10, d: new Dimensions([0, 0, 1, 0, 1, 0, 0, 0, 0]) },
@@ -396,7 +396,7 @@ export const builtInUnits = Object.freeze(
         /** If the non-SI unit rpm is considered a unit of frequency, then 1 rpm = 1/60 Hz (Wikipedia) */
         // "rpm": { s: 1/60, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
         /** Hertz: Frequency defined as 1 (cycle or rotation) / sec */
-        "Hz": { s: 1, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, 0]) },
+        "Hz": { s: 1, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, 0]), prefixable: true },
         // "Bq": { s: 1e+0, d: new Dimensions([0, 0, -1, 0, 0, 0, 0, 0]) },
         // "Gy": { s: 1e+0, d: new Dimensions([0, 2, -2, 0, 0, 0, 0, 0]) },
         // "Sv": { s: 1e+0, d: new Dimensions([0, 2, -2, 0, 0, 0, 0, 0]) },

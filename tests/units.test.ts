@@ -6,6 +6,9 @@ Deno.test(`parseUnits()`, async (t) => {
         ["mm", [{ prefix: "m", unit: "m", power: 1 }]],
         ["km", [{ prefix: "k", unit: "m", power: 1 }]],
         ["km^2", [{ prefix: "k", unit: "m", power: 2 }]],
+        ["uF", [{ prefix: "u", unit: "F", power: 1 }]],
+        ["mV^2", [{ prefix: "m", unit: "V", power: 2 }]],
+        ["MHz", [{ prefix: "M", unit: "Hz", power: 1 }]],
         ["km/s", [
             { prefix: "k", unit: "m", power: 1 },
             { unit: "s", power: -1 },
