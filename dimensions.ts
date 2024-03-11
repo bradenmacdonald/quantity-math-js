@@ -80,18 +80,20 @@ export class Dimensions {
         }
     }
 
+    /** Is this dimensionless? (all dimensions are zero) */
     public get isDimensionless(): boolean {
-        return this === Dimensionless || this.dimensions.every((d) => d == 0);
+        return this === Dimensionless || this.dimensions.every((d) => d === 0);
     }
 
-    private _cachedDimensionality: number | undefined;
+    /** Private cache of the dimensionality, as a minor optimization */
+    #cachedDimensionality: number | undefined;
 
     /** Get the dimensionality of this - the sum of the absolute values of all dimensions */
     public get dimensionality(): number {
-        if (this._cachedDimensionality === undefined) {
-            this._cachedDimensionality = this.dimensions.reduce<number>((sum, d) => sum + Math.abs(d ?? 0), 0);
+        if (this.#cachedDimensionality === undefined) {
+            this.#cachedDimensionality = this.dimensions.reduce<number>((sum, d) => sum + Math.abs(d ?? 0), 0);
         }
-        return this._cachedDimensionality;
+        return this.#cachedDimensionality;
     }
 
     private static combineCustomDimensionNames(x: Dimensions, y: Dimensions) {
