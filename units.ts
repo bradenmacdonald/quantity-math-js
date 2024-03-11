@@ -4,6 +4,8 @@ import { QuantityError } from "./error.ts";
 /** SI prefixes */
 export const prefixes = Object.freeze(
     {
+        q: 1e-30,
+        r: 1e-27,
         y: 1e-24,
         z: 1e-21,
         a: 1e-18,
@@ -11,6 +13,7 @@ export const prefixes = Object.freeze(
         p: 1e-12,
         n: 1e-9,
         u: 1e-6,
+        µ: 1e-6,
         m: 1e-3,
         c: 1e-2,
         d: 1e-1,
@@ -25,6 +28,8 @@ export const prefixes = Object.freeze(
         E: 1e+18,
         Z: 1e+21,
         Y: 1e+24,
+        R: 1e+27,
+        Q: 1e+30,
         Ki: 1.024e+3,
         Mi: 1.048576e+6,
         Gi: 1.073741824e+9,

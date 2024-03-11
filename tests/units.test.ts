@@ -7,6 +7,11 @@ Deno.test(`parseUnits()`, async (t) => {
         ["km", [{ prefix: "k", unit: "m", power: 1 }]],
         ["km^2", [{ prefix: "k", unit: "m", power: 2 }]],
         ["uF", [{ prefix: "u", unit: "F", power: 1 }]],
+        ["µF", [{ prefix: "µ", unit: "F", power: 1 }]],
+        ["Rg", [{ prefix: "R", unit: "g", power: 1 }]],
+        ["Qg", [{ prefix: "Q", unit: "g", power: 1 }]],
+        ["yg", [{ prefix: "y", unit: "g", power: 1 }]],
+        ["qg", [{ prefix: "q", unit: "g", power: 1 }]],
         ["mV^2", [{ prefix: "m", unit: "V", power: 2 }]],
         ["MHz", [{ prefix: "M", unit: "Hz", power: 1 }]],
         ["km/s", [
