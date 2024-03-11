@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { ParsedUnit, parseUnits, QuantityError } from "../mod.ts";
+import { builtInUnits, ParsedUnit, parseUnits, QuantityError } from "../mod.ts";
+import { prefixes, Unit } from "../units.ts";
 
 Deno.test(`parseUnits()`, async (t) => {
     const pairs: [input: string, output: ParsedUnit[]][] = [
@@ -82,5 +83,40 @@ Deno.test(`parseUnits() - invalid Strings`, async (t) => {
         await t.step(`parseUnit("${unitStr}")`, () => {
             assertThrows(() => parseUnits(unitStr), QuantityError, errorMsg);
         });
+    }
+});
+
+Deno.test("check for ambiguous units", async (t) => {
+    // Make sure we don't have any unit where some prefix + the unit abbreviation equals the abbreviation of another unit.
+    // e.g. "m" (milli) + "in" (inches) = "min" = milli-inches or minutes?
+    // (That's why we don't allow prefixes on non-SI units like inches.)
+    const regularPrefixes = Object.keys(prefixes).filter((prefix) =>
+        !prefix.endsWith("i")
+    ) as (keyof typeof prefixes)[];
+    const binaryPrefixes = Object.keys(prefixes).filter((prefix) => prefix.endsWith("i")) as (keyof typeof prefixes)[];
+
+    for (const [unitAbbrev, unitData] of Object.entries(builtInUnits as Record<string, Unit>)) {
+        if (unitData.prefixable) {
+            await t.step(`${unitAbbrev} with regular SI prefixes`, () => {
+                // Test all the non-binary prefixes:
+                for (const prefix of regularPrefixes) {
+                    assertEquals(
+                        parseUnits(`${prefix}${unitAbbrev}`),
+                        [{ prefix, unit: unitAbbrev, power: 1 }],
+                    );
+                }
+            });
+        }
+        if (unitData.binaryPrefixable) {
+            await t.step(`${unitAbbrev} with binary SI prefixes`, () => {
+                // Test all the binary prefixes:
+                for (const prefix of binaryPrefixes) {
+                    assertEquals(
+                        parseUnits(`${prefix}${unitAbbrev}`),
+                        [{ prefix, unit: unitAbbrev, power: 1 }],
+                    );
+                }
+            });
+        }
     }
 });
