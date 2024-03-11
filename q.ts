@@ -1,6 +1,9 @@
 import { Quantity } from "./quantity.ts";
 import { QuantityError } from "./error.ts";
 
+/**
+ * Construct a `Quantity` instance from a string.
+ */
 export function Q(strings: string | readonly string[], ...keys: unknown[]): Quantity {
     let fullString: string;
     if (typeof strings == "string") {
