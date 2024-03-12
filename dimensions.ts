@@ -52,9 +52,7 @@ export class Dimensions {
         ] = [],
     ) {
         if (dimensions.length < numBasicDimensions) {
-            throw new QuantityError(
-                "not enough dimensions specified for Quantity.",
-            );
+            throw new QuantityError("not enough dimensions specified for Quantity.");
         }
 
         const numCustomDimensions = customDimensionNames.length;
@@ -64,28 +62,23 @@ export class Dimensions {
             );
         }
 
-        if (customDimensionNames.length) {
+        if (numCustomDimensions) {
             // Make sure customDimensionNames is sorted in alphabetical order, for consistency.
             // This also validated that there are no duplicate custom dimensions (["floop", "floop"])
-            const isSorted = customDimensionNames.every((
-                v,
-                i,
-                a,
-            ) => (i === 0 || v! > a[i - 1]!));
+            const isSorted = customDimensionNames.every((v, i, a) => (i === 0 || v! > a[i - 1]!));
             if (!isSorted) {
-                throw new QuantityError(
-                    "customDimensionNames is not sorted into the correct alphabetical order.",
-                );
+                throw new QuantityError("customDimensionNames is not sorted into the correct alphabetical order.");
             }
         }
     }
 
     /** Is this dimensionless? (all dimensions are zero) */
     public get isDimensionless(): boolean {
-        return this === Dimensionless || this.dimensions.every((d) => d === 0);
+        if (this.#cachedDimensionality !== undefined) return this.#cachedDimensionality === 0;
+        return this.dimensions.every((d) => d === 0);
     }
 
-    /** Private cache of the dimensionality, as a minor optimization */
+    /** Private cache of the dimensionality, as an optimization */
     #cachedDimensionality: number | undefined;
 
     /** Get the dimensionality of this - the sum of the absolute values of all dimensions */
@@ -180,18 +173,15 @@ export class Dimensions {
 
     /** Raise these dimensions to a power */
     public pow(n: number): Dimensions {
-        if (typeof n !== "number" || isNaN(n) || !Number.isInteger(n)) {
+        if (!Number.isInteger(n)) {
             throw new QuantityError(`Dimensions.pow(n): n must be an integer`);
         }
         if (n === 0) {
             return Dimensionless;
         }
         const newDimArray = this.dimensions.map((d) => d! * n);
-        return new Dimensions(
-            // deno-lint-ignore no-explicit-any
-            newDimArray as any,
-            this.customDimensionNames,
-        );
+        // deno-lint-ignore no-explicit-any
+        return new Dimensions(newDimArray as any, this.customDimensionNames);
     }
 
     /** Use a nice string when logging this with Deno's console.log() etc. */
