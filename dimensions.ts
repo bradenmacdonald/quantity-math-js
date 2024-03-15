@@ -38,18 +38,10 @@ export class Dimensions {
              *
              * For special units like "passengers per hour per direction", "passengers" is a custom dimension, as is "direction"
              */
-            custom1?: number,
-            custom2?: number,
-            custom3?: number,
-            custom4?: number,
-        ],
-        public readonly customDimensionNames: [
-            /** e.g. "fish", "passengers", "$USD", or whatever other custom unit dimension this is */
-            custom1?: string,
-            custom2?: string,
-            custom3?: string,
-            custom4?: string,
-        ] = [],
+            ...customDimensions: number[],
+        ] & { length: 9 | 10 | 11 | 12 | 13 },
+        /** names of the custom dimensions, e.g. "fish", "passengers", "$USD", if relevant */
+        public readonly customDimensionNames: readonly string[] = [],
     ) {
         if (dimensions.length < numBasicDimensions) {
             throw new QuantityError("not enough dimensions specified for Quantity.");
@@ -65,7 +57,7 @@ export class Dimensions {
         if (numCustomDimensions) {
             // Make sure customDimensionNames is sorted in alphabetical order, for consistency.
             // This also validated that there are no duplicate custom dimensions (["floop", "floop"])
-            const isSorted = customDimensionNames.every((v, i, a) => (i === 0 || v! > a[i - 1]!));
+            const isSorted = customDimensionNames.every((v, i, a) => (i === 0 || v > a[i - 1]));
             if (!isSorted) {
                 throw new QuantityError("customDimensionNames is not sorted into the correct alphabetical order.");
             }
@@ -84,7 +76,7 @@ export class Dimensions {
     /** Get the dimensionality of this - the sum of the absolute values of all dimensions */
     public get dimensionality(): number {
         if (this.#cachedDimensionality === undefined) {
-            this.#cachedDimensionality = this.dimensions.reduce<number>((sum, d) => sum + Math.abs(d ?? 0), 0);
+            this.#cachedDimensionality = this.dimensions.reduce((sum, d) => sum + Math.abs(d), 0);
         }
         return this.#cachedDimensionality;
     }
@@ -133,9 +125,8 @@ export class Dimensions {
     public multiply(y: Dimensions): Dimensions {
         if (this.customDimensionNames.length === 0 && y.customDimensionNames.length === 0) {
             // Normal case - no custom dimensions:
-            const newDimArray = this.dimensions.map((d, i) => d! + y.dimensions[i]!);
-            // deno-lint-ignore no-explicit-any
-            return new Dimensions(newDimArray as any, []);
+            const newDimArray = this.dimensions.map((d, i) => d + y.dimensions[i]) as typeof this.dimensions;
+            return new Dimensions(newDimArray, []);
         } else {
             // We have to handle custom dimensions in one or both Dimensions objects.
             // They may have different custom dimensions or may be the same.
@@ -147,28 +138,26 @@ export class Dimensions {
             const newDimArray = new Array<number>(numBasicDimensions + customDimensionNames.length);
             // Multiply the basic dimensions:
             for (let i = 0; i < numBasicDimensions; i++) {
-                newDimArray[i] = this.dimensions[i]! + y.dimensions[i]!;
+                newDimArray[i] = this.dimensions[i] + y.dimensions[i];
             }
             // Multiply the custom dimensions:
             for (let i = 0; i < customDimensionNames.length; i++) {
                 let dimValue = 0;
                 const custDimName = customDimensionNames[i];
                 const thisIdx = this.customDimensionNames.indexOf(custDimName);
-                if (thisIdx !== -1) dimValue += this.dimensions[numBasicDimensions + thisIdx]!;
+                if (thisIdx !== -1) dimValue += this.dimensions[numBasicDimensions + thisIdx];
                 const yIdx = y.customDimensionNames.indexOf(custDimName);
-                if (yIdx !== -1) dimValue += y.dimensions[numBasicDimensions + yIdx]!;
+                if (yIdx !== -1) dimValue += y.dimensions[numBasicDimensions + yIdx];
                 newDimArray[numBasicDimensions + i] = dimValue;
             }
-            // deno-lint-ignore no-explicit-any
-            return new Dimensions(newDimArray as any, customDimensionNames as any);
+            return new Dimensions(newDimArray as typeof this.dimensions, customDimensionNames);
         }
     }
 
     /** Invert these dimensions, returning a new inverted Dimensions instance */
     public invert(): Dimensions {
-        const newDimArray = this.dimensions.map((d) => d! * -1);
-        // deno-lint-ignore no-explicit-any
-        return new Dimensions(newDimArray as any, this.customDimensionNames);
+        const newDimArray = this.dimensions.map((d) => d * -1) as typeof this.dimensions;
+        return new Dimensions(newDimArray, this.customDimensionNames);
     }
 
     /** Raise these dimensions to a power */
@@ -179,9 +168,8 @@ export class Dimensions {
         if (n === 0) {
             return Dimensionless;
         }
-        const newDimArray = this.dimensions.map((d) => d! * n);
-        // deno-lint-ignore no-explicit-any
-        return new Dimensions(newDimArray as any, this.customDimensionNames);
+        const newDimArray = this.dimensions.map((d) => d * n) as typeof this.dimensions;
+        return new Dimensions(newDimArray, this.customDimensionNames);
     }
 
     /** Use a nice string when logging this with Deno's console.log() etc. */
