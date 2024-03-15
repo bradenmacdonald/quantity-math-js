@@ -9,6 +9,8 @@ import { QuantityError } from "./error.ts";
  */
 const numBasicDimensions = 9;
 
+const emptyArray = Object.freeze([]);
+
 // TODO: add an angle dimension, like Boost and Mathematica do.
 
 /**
@@ -41,7 +43,7 @@ export class Dimensions {
             ...customDimensions: number[],
         ] & { length: 9 | 10 | 11 | 12 | 13 },
         /** names of the custom dimensions, e.g. "fish", "passengers", "$USD", if relevant */
-        public readonly customDimensionNames: readonly string[] = [],
+        public readonly customDimensionNames: readonly string[] = emptyArray,
     ) {
         if (dimensions.length < numBasicDimensions) {
             throw new QuantityError("not enough dimensions specified for Quantity.");
@@ -119,7 +121,7 @@ export class Dimensions {
         if (this.customDimensionNames.length === 0 && y.customDimensionNames.length === 0) {
             // Normal case - no custom dimensions:
             const newDimArray = this.dimensions.map((d, i) => d + y.dimensions[i]) as typeof this.dimensions;
-            return new Dimensions(newDimArray, []);
+            return new Dimensions(newDimArray);
         } else {
             // We have to handle custom dimensions in one or both Dimensions objects.
             // They may have different custom dimensions or may be the same.
@@ -147,6 +149,18 @@ export class Dimensions {
         }
     }
 
+    /** Multiply by the inverse of the given dimensions */
+    public divide(y: Dimensions): Dimensions {
+        if (this.customDimensionNames.length === 0 && y.customDimensionNames.length === 0) {
+            // Optimized case if we don't have to deal with custom dimensions
+            // This direct "division" via subtraction is faster than multiplying by the inverse
+            const newDimArray = this.dimensions.map((d, i) => d - y.dimensions[i]) as typeof this.dimensions;
+            return new Dimensions(newDimArray);
+        } else {
+            return this.multiply(y.invert());
+        }
+    }
+
     /** Invert these dimensions, returning a new inverted Dimensions instance */
     public invert(): Dimensions {
         const newDimArray = this.dimensions.map((d) => d * -1) as typeof this.dimensions;
@@ -155,11 +169,12 @@ export class Dimensions {
 
     /** Raise these dimensions to a power */
     public pow(n: number): Dimensions {
-        if (!Number.isInteger(n)) {
-            throw new QuantityError(`Dimensions.pow(n): n must be an integer`);
-        }
-        if (n === 0) {
+        if (n === 1) {
+            return this;
+        } else if (n === 0) {
             return Dimensionless;
+        } else if (!Number.isInteger(n)) {
+            throw new QuantityError(`Dimensions.pow(n): n must be an integer`);
         }
         const newDimArray = this.dimensions.map((d) => d * n) as typeof this.dimensions;
         return new Dimensions(newDimArray, this.customDimensionNames);

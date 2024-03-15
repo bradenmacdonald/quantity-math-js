@@ -394,28 +394,30 @@ export class Quantity {
         let remainder = this._dimensions;
         while (remainder.dimensionality > 0) {
             let bestIdx = -1;
-            let bestInv = 0;
+            let bestInv = false;
             let bestRemainder = remainder;
             unitsLoop:
             for (let unitIdx = 0; unitIdx < unitArray.length; unitIdx++) {
                 const unitDimensions = unitArray[unitIdx];
-                for (let isInv = 1; isInv >= -1; isInv -= 2) {
-                    const newRemainder = remainder.multiply(isInv === 1 ? unitDimensions.invert() : unitDimensions);
+                let isInv = false;
+                do {
+                    const newRemainder = isInv ? remainder.multiply(unitDimensions) : remainder.divide(unitDimensions);
                     // If this unit reduces the dimensionality more than the best candidate unit yet found,
                     // or reduces the dimensionality by the same amount but is in the numerator rather than denominator:
                     if (
                         (newRemainder.dimensionality < bestRemainder.dimensionality) ||
-                        (newRemainder.dimensionality === bestRemainder.dimensionality && isInv === 1 && bestInv === -1)
+                        (newRemainder.dimensionality === bestRemainder.dimensionality && !isInv && bestInv)
                     ) {
                         bestIdx = unitIdx;
                         bestInv = isInv;
                         bestRemainder = newRemainder;
                         // If we've matched all the dimensions, there's no need to check more units.
-                        if (newRemainder.isDimensionless && isInv === 1) break unitsLoop;
+                        if (newRemainder.isDimensionless && !isInv) break unitsLoop;
                         // Otherwise, if this unit is better than bestRemainder, we don't need to check its inverse
                         break;
                     }
-                }
+                    isInv = !isInv;
+                } while (isInv);
             }
             // Check to make sure that progress is being made towards remainder = 0
             // If no more progress is being made then we won't be able to find a compatible unit set from this list.
@@ -428,9 +430,9 @@ export class Quantity {
             const existingIdx = useUnits.indexOf(bestIdx);
             if (existingIdx == -1) {
                 useUnits.push(bestIdx);
-                useUnitsPower.push(bestInv);
+                useUnitsPower.push(bestInv ? -1 : 1);
             } else {
-                useUnitsPower[existingIdx] += bestInv;
+                useUnitsPower[existingIdx] += bestInv ? -1 : 1;
             }
             remainder = bestRemainder;
         }

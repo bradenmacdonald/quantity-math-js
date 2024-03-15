@@ -572,10 +572,9 @@ export function toUnitString(units: readonly ParsedUnit[]): string {
 }
 
 export function getUnitData(unit: string, additionalUnits?: Readonly<Record<string, Unit>>): Unit {
-    const units: Record<string, Unit> = additionalUnits ? { ...builtInUnits, ...additionalUnits } : builtInUnits;
-    if (unit in units) {
-        return units[unit];
-    } else if (unit.startsWith("_")) {
+    const found: Unit | undefined = builtInUnits[unit as keyof typeof builtInUnits] ?? additionalUnits?.[unit];
+    if (found !== undefined) return found;
+    if (unit.startsWith("_")) {
         // This is our shorthand notation for the base unit in a custom dimension.
         // e.g. "_pax" is a custom unit with dimensionality of 1 in the "pax" dimension.
         return { s: 1, d: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [unit.substring(1)]) };
