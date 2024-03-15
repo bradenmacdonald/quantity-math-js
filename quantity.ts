@@ -396,9 +396,9 @@ export class Quantity {
             let bestIdx = -1;
             let bestInv = 0;
             let bestRemainder = remainder;
+            unitsLoop:
             for (let unitIdx = 0; unitIdx < unitArray.length; unitIdx++) {
                 const unitDimensions = unitArray[unitIdx];
-                if (unitDimensions.isDimensionless) continue; // skip dimensionless units
                 for (let isInv = 1; isInv >= -1; isInv -= 2) {
                     const newRemainder = remainder.multiply(isInv === 1 ? unitDimensions.invert() : unitDimensions);
                     // If this unit reduces the dimensionality more than the best candidate unit yet found,
@@ -410,7 +410,10 @@ export class Quantity {
                         bestIdx = unitIdx;
                         bestInv = isInv;
                         bestRemainder = newRemainder;
-                        break; // Tiny optimization: if this unit is better than bestRemainder, we don't need to check its inverse
+                        // If we've matched all the dimensions, there's no need to check more units.
+                        if (newRemainder.isDimensionless && isInv === 1) break unitsLoop;
+                        // Otherwise, if this unit is better than bestRemainder, we don't need to check its inverse
+                        break;
                     }
                 }
             }
