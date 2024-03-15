@@ -419,7 +419,7 @@ export class Quantity {
             }
             // Check to make sure that progress is being made towards remainder = 0
             // If no more progress is being made then we won't be able to find a compatible unit set from this list.
-            if (bestRemainder.dimensionality >= remainder.dimensionality) {
+            if (bestIdx === -1) {
                 throw new InvalidConversionError();
             }
             // Check if the new best unit already in the set of numerator or
