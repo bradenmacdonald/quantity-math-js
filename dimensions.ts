@@ -66,8 +66,7 @@ export class Dimensions {
 
     /** Is this dimensionless? (all dimensions are zero) */
     public get isDimensionless(): boolean {
-        if (this.#cachedDimensionality !== undefined) return this.#cachedDimensionality === 0;
-        return this.dimensions.every((d) => d === 0);
+        return this.dimensionality === 0;
     }
 
     /** Private cache of the dimensionality, as an optimization */
@@ -82,15 +81,9 @@ export class Dimensions {
     }
 
     private static combineCustomDimensionNames(x: Dimensions, y: Dimensions) {
-        const customDimensionNames = [...x.customDimensionNames];
-        for (const custDimName of y.customDimensionNames) {
-            if (!customDimensionNames.includes(custDimName)) {
-                customDimensionNames.push(custDimName);
-            }
-        }
+        const set = new Set([...x.customDimensionNames, ...y.customDimensionNames]);
         // Custom dimension names must always be sorted.
-        customDimensionNames.sort();
-        return customDimensionNames;
+        return Array.from(set).sort();
     }
 
     /**
