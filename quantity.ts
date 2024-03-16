@@ -16,6 +16,8 @@ export interface SerializedQuantity {
 
 /** Private constructor parameter to pass '_unitOutput' values. */
 const setUnitOutput = Symbol("setUnitOutput");
+/** Private constructor parameter to skip applying an offset to units like degF that are offset from the base unit */
+const applyOffset = Symbol("applyOffset");
 
 /**
  * Quantity - a value with dimensions (units)
@@ -65,16 +67,9 @@ export class Quantity {
     protected _plusMinus: number | undefined;
 
     /**
-     * For a few units like "degC", "degF", and "gauge Pascals", we need to keep track of their offset from
-     * the base units. (e.g. 0C = 273.15K). This is ONLY used within `get()` and this field does not
-     * need to be preserved when cloning a Quantity or doing math with Quantities, because the offset is
-     * already applied within the constructor, which converts everything to non-offset base units.
-     */
-    protected readonly _offsetUsed: number | undefined;
-    /**
      * Units to use instead of the base units, when displaying this value.
      */
-    protected readonly _unitOutput: readonly ParsedUnit[] | undefined;
+    public readonly unitOutput: readonly ParsedUnit[] | undefined;
 
     constructor(
         protected _magnitude: number,
@@ -89,6 +84,11 @@ export class Quantity {
             plusMinus?: number;
             /** Internal use only - set the _unitOutput on this newly constructed Quantity */
             [setUnitOutput]?: readonly ParsedUnit[];
+            /**
+             * Internal use only - override how we handle offset units like "degC" or "degF"
+             * where 0 in the offset unit doesn't equal 0 in the base unit.
+             */
+            [applyOffset]?: (offset: number) => void;
         } = {},
     ) {
         this.significantFigures = options.significantFigures;
@@ -100,7 +100,7 @@ export class Quantity {
             const units: readonly ParsedUnit[] = typeof options.units === "string"
                 ? parseUnits(options.units)
                 : options.units;
-            this._unitOutput = units;
+            this.unitOutput = units;
             this._dimensions = Dimensionless;
             for (const u of units) {
                 const unitData = getUnitData(u.unit);
@@ -109,22 +109,27 @@ export class Quantity {
                 unitQuantity._pow(u.power);
                 this._multiply(unitQuantity);
                 if (unitData.offset) {
+                    // For a few units like "degC", "degF", and "gauge Pascals", we need to apply an offset from
+                    // the base units. (e.g. 0C = 273.15K). This only happens here during the constructor, where
+                    // we convert everything to non-offset base units. (A related conversion also happens in
+                    // .get() ).
                     if (units.length !== 1) {
                         throw new QuantityError(
                             `It is not permitted to use compound units that include the offset unit "${u}". Try using K, deltaC, or Pa instead.`,
                         );
                         // e.g. "50 °C per kilometer" doesn't make any sense, but "50 ΔC per kilometer" could make sense.
                     }
-                    this._magnitude += unitData.offset;
-                    // We need to track the offset for the get() method to be able to do conversions properly.
-                    this._offsetUsed = unitData.offset;
+                    // Normally we just add the offset to the magnitude of this unit, but the .get() method
+                    // need different functionality so can override that when necessary.
+                    const doOffset = options[applyOffset] ?? ((offset: number) => this._magnitude += offset);
+                    doOffset(unitData.offset);
                 }
             }
         } else if (options.dimensions) {
             this._dimensions = options.dimensions;
-            this._unitOutput = options[setUnitOutput];
+            this.unitOutput = options[setUnitOutput];
             // Normalize the _unitOutput value to never be an empty array:
-            if (this._unitOutput?.length === 0) this._unitOutput = undefined;
+            if (this.unitOutput?.length === 0) this.unitOutput = undefined;
         } else {
             this._dimensions = Dimensionless;
         }
@@ -288,16 +293,15 @@ export class Quantity {
      * ```
      */
     public get(): SerializedQuantity {
-        const unitsForResult: readonly ParsedUnit[] = this._unitOutput ?? this.pickUnitsFromList(baseSIUnits);
-        const converter = new Quantity(1, { units: unitsForResult });
+        const unitsForResult: readonly ParsedUnit[] = this.unitOutput ?? this.pickUnitsFromList(baseSIUnits);
+        let magnitudeUnscaled = this._magnitude;
+        const converter = new Quantity(1, {
+            units: unitsForResult,
+            [applyOffset]: (offset) => magnitudeUnscaled -= offset,
+        });
 
-        if (converter._offsetUsed) {
-            // For units of C/F temperature or "gauge Pascals" that have an offset, undo that offset
-            // so that the converter represents the unit quantity.
-            converter._magnitude -= converter._offsetUsed;
-        }
         const result: SerializedQuantity = {
-            magnitude: (this._magnitude - (converter._offsetUsed ?? 0)) / converter._magnitude,
+            magnitude: magnitudeUnscaled / converter._magnitude,
             units: toUnitString(unitsForResult),
         };
         if (this.significantFigures) {
@@ -333,7 +337,7 @@ export class Quantity {
      * ```
      */
     public toSI(): Quantity {
-        if (this._unitOutput) {
+        if (this.unitOutput) {
             return this._clone({ newUnitOutput: undefined });
         }
         return this;
@@ -449,7 +453,7 @@ export class Quantity {
             dimensions: this._dimensions,
             plusMinus: this._plusMinus,
             significantFigures: this.significantFigures,
-            [setUnitOutput]: "newUnitOutput" in options ? options.newUnitOutput : this._unitOutput,
+            [setUnitOutput]: "newUnitOutput" in options ? options.newUnitOutput : this.unitOutput,
         });
     }
 
@@ -479,7 +483,7 @@ export class Quantity {
             plusMinus,
             significantFigures,
             // Preserve the output units, so that the new Quantity will remember what units were requested:
-            [setUnitOutput]: this._unitOutput,
+            [setUnitOutput]: this.unitOutput,
         });
     }
 
@@ -529,13 +533,13 @@ export class Quantity {
     public multiply(y: Quantity): Quantity {
         // Figure out what preferred unit should be used for the new Quantity, if relevant:
         let newUnitOutput: readonly ParsedUnit[] | undefined = undefined;
-        if (this._unitOutput && y._unitOutput) {
-            const xUnits = this._unitOutput.map((u) => ({ ...u, ...getUnitData(u.unit) }));
-            const yUnits = y._unitOutput.map((u) => ({ ...u, ...getUnitData(u.unit) }));
+        if (this.unitOutput && y.unitOutput) {
+            const xUnits = this.unitOutput.map((u) => ({ ...u, ...getUnitData(u.unit) }));
+            const yUnits = y.unitOutput.map((u) => ({ ...u, ...getUnitData(u.unit) }));
             if (xUnits.length === 1 && xUnits[0].d.isDimensionless) {
-                newUnitOutput = y._unitOutput;
+                newUnitOutput = y.unitOutput;
             } else if (yUnits.length === 1 && yUnits[0].d.isDimensionless) {
-                newUnitOutput = this._unitOutput;
+                newUnitOutput = this.unitOutput;
             } else {
                 // modify xUnits by combining yUnits into it
                 for (const u of yUnits) {
@@ -553,7 +557,7 @@ export class Quantity {
                 }));
             }
         } else {
-            newUnitOutput = this._unitOutput ?? y._unitOutput;
+            newUnitOutput = this.unitOutput ?? y.unitOutput;
         }
         // Do the actual multiplication of the magnitude and dimensions:
         const result = this._clone({ newUnitOutput });
