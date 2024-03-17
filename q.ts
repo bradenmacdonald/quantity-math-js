@@ -1,4 +1,5 @@
-import { Quantity, QuantityError } from "@bradenmacdonald/quantity-math-js";
+import { Quantity } from "./quantity.ts";
+import { QuantityError } from "./error.ts";
 
 export function Q(strings: string | ReadonlyArray<string>, ...keys: unknown[]): Quantity {
     let fullString: string;
