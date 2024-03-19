@@ -3,6 +3,7 @@ import { Q as ourQ } from "../mod.ts";
 import JSQ_Qty from "npm:js-quantities@1.8.0";
 import PQM from "npm:pqm@1.0.0";
 import * as mathjs from "npm:mathjs@12.4.1";
+import unitmath from "npm:unitmath@1.1.0";
 
 Deno.bench("Quantity conversions - quantity-math-js", { group: "conversion", baseline: true }, () => {
     const Q = ourQ;
@@ -89,6 +90,28 @@ Deno.bench("Quantity conversions - mathjs", { group: "conversion" }, () => {
     }
 });
 
+Deno.bench("Quantity conversions - unitmath", { group: "conversion" }, () => {
+    // deno-lint-ignore no-explicit-any
+    const Q = unitmath as any as typeof unitmath.default; // Not sure why types are wrong...
+    const a = Q("400 g");
+    const b = Q("0.5"); // Can't find a way to do "50 %" in unitmath ?
+    const c = a.mul(b);
+    c.toString();
+    const d = c.mul(Q(`50 m/s`)); // 10,000 g * m / s (= 10 kg * m / s)
+    const e = d.mul(Q(`0.1 s^-1`)); // 1 kg * m / s^2 (= 1 N)
+    const f = e.add(Q(`5.5 N`));
+    const g = f.mul(Q(`10`)).add(Q(`5 N`)).add(Q(`-20 N`)).mul(Q(`2`));
+    const h = g.simplify();
+    if (h.toString() !== "100 N") throw new Error(`Got ${h.toString()} unexpectedly.`);
+
+    // And some crazy conversion:
+    const orig = Q(`500 uF`);
+    const converted = orig.to("h*s^3*A^2/lb*m*ft");
+    if (converted.toString() !== "1.92020769966667e-8 h s^3 A^2 / lb m ft") {
+        throw new Error(`Got ${converted.toString()} unexpectedly.`);
+    }
+});
+
 Deno.bench("Custom units - quantity-math-js", { group: "custom", baseline: true }, () => {
     const Q = ourQ;
     const a = Q`400 _fleeb`;
@@ -125,4 +148,32 @@ Deno.bench("Custom units - math-js", { group: "custom" }, () => {
         Q(`1 boop / bil`),
     );
     if (h.toString() !== "2000 (fleeb schleem) / s") throw new Error(`Got ${h.toString()} unexpectedly.`);
+});
+
+Deno.bench("Custom units - unitmath", { group: "custom" }, (t) => {
+    // deno-lint-ignore no-explicit-any
+    const um = unitmath as any as typeof unitmath.default; // Not sure why types are wrong...
+    const Q = um.config({
+        definitions: {
+            units: {
+                fleeb: { quantity: "FLEEB", value: 1 },
+                bil: { quantity: "BIL", value: 1 },
+                boop: { quantity: "BOOP", value: 1 },
+                schleem: { quantity: "SCHLEEM", value: 1 },
+            },
+        },
+    });
+    t.start(); // Don't count the setup above in the benchmark.
+    const a = Q("400 fleeb");
+    const b = Q("0.5"); // Can't find a way to do "50 %" in mathjs ?
+    const c = a.mul(b); // 200 fleeb
+    const d = c.mul(Q("50 bil/boop")); // 10,000 fleeb bil / boop
+    const e = d.mul(Q("0.1 s^-1")); // 1,000 fleeb bil / boop s
+    const f = e.add(Q("500 fleeb bil / boop s")); // 1,500 fleeb bil / boop s
+    const g = f.mul(Q("10")).add(Q("5 fleeb bil / boop s")).add(Q("-20 fleeb bil / boop s")).mul(Q("2"));
+    if (g.toString() !== "29970 fleeb bil / boop s") throw new Error(`Got ${g.toString()} unexpectedly.`);
+
+    const h = g.mul(Q("0.1 schleem")).sub(Q("997 fleeb schleem bil / boop s")).mul(Q("1 boop / bil"));
+    if (h.toString() !== "2000 fleeb schleem / s") throw new Error(`Got ${h.toString()} unexpectedly.`);
+    t.end();
 });
