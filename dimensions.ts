@@ -2,12 +2,12 @@ import { QuantityError } from "./error.ts";
 
 /**
  * How many basic dimensions there are
- * (mass, length, time, temp, current, substance, luminosity, information)
+ * (mass, length, time, temp, current, substance, information, reserved)
  *
  * As opposed to custom dimensions, like "flurbs per bloop" which has two
  * custom dimensions (flurbs and bloops).
  */
-const numBasicDimensions = 9;
+const numBasicDimensions = 8;
 
 const emptyArray = Object.freeze([]);
 
@@ -32,16 +32,15 @@ export class Dimensions {
             temperature: number,
             current: number,
             substance: number,
-            luminosity: number,
             information: number,
-            angle: number,
+            reserved: number, // for luminosity or angle or ?
             /**
              * Track custom dimensions.
              *
              * For special units like "passengers per hour per direction", "passengers" is a custom dimension, as is "direction"
              */
             ...customDimensions: number[],
-        ] & { length: 9 | 10 | 11 | 12 | 13 },
+        ] & { length: 8 | 10 | 9 | 11 | 12 },
         /** names of the custom dimensions, e.g. "fish", "passengers", "$USD", if relevant */
         public readonly customDimensionNames: readonly string[] = emptyArray,
     ) {
@@ -219,4 +218,4 @@ export class Dimensions {
  *
  * Likewise an SI expression like "1 μm/m" is dimensionless after simplification.
  */
-export const Dimensionless: Dimensions = new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0]);
+export const Dimensionless: Dimensions = new Dimensions([0, 0, 0, 0, 0, 0, 0, 0]);

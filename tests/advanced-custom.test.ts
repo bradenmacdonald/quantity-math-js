@@ -26,7 +26,7 @@ Deno.test("Units with 'custom' dimensions", async (t) => {
             const q = new Quantity(3400, { units: "pphpd" });
             assertEquals(
                 q.dimensions,
-                new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 1], [
+                new Dimensions([0, 0, -1, 0, 0, 0, 0, 0, -1, 1], [
                     "dir",
                     "pax",
                 ]),
@@ -67,7 +67,7 @@ Deno.test("Units with 'custom' dimensions", async (t) => {
                 magnitude: 3_400,
                 units: "pphpd⋅day",
             });
-            assertEquals(product.getWithUnits(`_pax/_dir`), {
+            assertEquals(product.convert(`_pax/_dir`).get(), {
                 magnitude: 3_400 * 24,
                 units: "_pax/_dir",
             });

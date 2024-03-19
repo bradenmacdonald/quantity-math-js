@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { Dimensions, QuantityError } from "../mod.ts";
 
-const baseDimensions = [0, 0, 0, 0, 0, 0, 0, 0, 0] as const;
+const baseDimensions = [0, 0, 0, 0, 0, 0, 0, 0] as const;
 
 Deno.test(`Dimensions constructor`, async (t) => {
     await t.step(
@@ -19,14 +19,14 @@ Deno.test(`Dimensions constructor`, async (t) => {
             assertThrows(
                 () => {
                     // @ts-expect-error: array has too few entries
-                    new Dimensions([1, 2, 3, 4, 5, 6, 7, 8]);
+                    new Dimensions([1, 2, 3, 4, 5, 6, 7]);
                 },
                 QuantityError,
                 "not enough dimensions specified for Quantity.",
             );
 
             // This one throws no error:
-            new Dimensions([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+            new Dimensions([1, 2, 3, 4, 5, 6, 7, 8]);
         },
     );
 
@@ -127,18 +127,18 @@ Deno.test(`Multiplying custom dimensions`, async (t) => {
 
 Deno.test(`toString`, async (t) => {
     await t.step(`dimensionless`, () => {
-        assertEquals(new Dimensions([...baseDimensions]).toString(), "[0,0,0,0,0,0,0,0,0]");
+        assertEquals(new Dimensions([...baseDimensions]).toString(), "[0,0,0,0,0,0,0,0]");
     });
-    await t.step(`[0,2,4,6,8,0,0,0,-3]`, () => {
-        assertEquals(new Dimensions([0, 2, 4, 6, 8, 0, 0, 0, -3]).toString(), "[0,2,4,6,8,0,0,0,-3]");
+    await t.step(`[0,2,4,6,8,0,0,-3]`, () => {
+        assertEquals(new Dimensions([0, 2, 4, 6, 8, 0, 0, -3]).toString(), "[0,2,4,6,8,0,0,-3]");
     });
-    await t.step(`[0,2,4,6,8,0,0,0,-3,7] with 7 in a custom "foo" dimension`, () => {
-        assertEquals(new Dimensions([0, 2, 4, 6, 8, 0, 0, 0, -3, 7], ["foo"]).toString(), "[0,2,4,6,8,0,0,0,-3,foo:7]");
+    await t.step(`[0,2,4,6,8,0,0,-3,7] with 7 in a custom "foo" dimension`, () => {
+        assertEquals(new Dimensions([0, 2, 4, 6, 8, 0, 0, -3, 7], ["foo"]).toString(), "[0,2,4,6,8,0,0,-3,foo:7]");
     });
     await t.step(`different custom dimensions (4)`, () => {
         assertEquals(
             new Dimensions([...baseDimensions, 1, 2, 0, -3], ["abc", "bar", "foo", "zzzzzzz"]).toString(),
-            "[0,0,0,0,0,0,0,0,0,abc:1,bar:2,foo:0,zzzzzzz:-3]",
+            "[0,0,0,0,0,0,0,0,abc:1,bar:2,foo:0,zzzzzzz:-3]",
         );
     });
 });
