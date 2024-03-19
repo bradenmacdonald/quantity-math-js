@@ -30,20 +30,24 @@ Zero dependencies.
 Importing:
 
 ```ts
-import { Quantity } from "@bradenmacdonald/quantity-math-js";
+import { Q, Quantity } from "@bradenmacdonald/quantity-math-js";
 ```
 
 Constructing a quantity value:
 
 ```ts
 new Quantity(10, { units: "cm" });
+// or
+Q`10 cm`;
+// or
+Q("10 cm");
 ```
 
 Adding two quantities:
 
 ```ts
-const x = new Quantity(5, { units: "m" });
-const y = new Quantity(20, { units: "cm" });
+const x = Q`5 m`;
+const y = Q`20 cm`;
 const z = x.add(y);
 z.toString(); // "5.2 m"
 ```
@@ -51,8 +55,8 @@ z.toString(); // "5.2 m"
 Multiplying two quantities:
 
 ```ts
-const x = new Quantity(5, { units: "kg" });
-const y = new Quantity(2, { units: "m" });
+const x = Q`5 kg`;
+const y = Q`2 m`;
 const z = x.multiply(y);
 z.toString(); // "10 kg⋅m"
 ```
@@ -64,37 +68,19 @@ const x = new Quantity(5, { units: "lb" });
 x.get(); // { magnitude: 5, units: "lb" }
 ```
 
-Serialize to simple object, using specified units:
+Convert a quantity to the specified units:
 
 ```ts
-const x = new Quantity(10, { units: "cm" });
-x.getWithUnits("in"); // { magnitude: 3.9370078740157486, units: "in" }
+const x = Q`10 cm`;
+x.convert("in").get(); // { magnitude: 3.9370078740157486, units: "in" }
+x.convert("mm").toString(); // "100 mm"
 ```
 
 Simplify units:
 
 ```ts
 const x = new Quantity(5, { units: "kg^2⋅m^2⋅s^-4⋅A^-2" });
-x.getSI(); // { magnitude: 5, units: "kg/F" }
-```
-
-## Syntactic Sugar
-
-If you prefer, there is a much more compact way to initialize `Quantity` instances: using the `Q` template helper. This
-is slightly less efficient, but far more readable and convenient in many cases.
-
-```ts
-import { Q } from "@bradenmacdonald/quantity-math-js";
-
-const force = Q`34.2 kg m/s^2`; // Shorter version of: new Quantity(34.2, {units: "kg m/s^2"})
-force.getSI(); // { magnitude: 34.2, units: "N" }
-force.multiply(Q`2 s^2`).toString(); // "68.4 kg⋅m"
-```
-
-You can also call it as a function, which acts like "parse quantity string":
-
-```ts
-const force = Q("34.2 kg m/s^2"); // new Quantity(34.2, {units: "kg m/s^2"})
+x.toSI().toString(); // "5 kg/F"
 ```
 
 ## Error/uncertainty/tolerance
