@@ -1,13 +1,13 @@
 import { assert, assertEquals, assertFalse, assertNotEquals, assertThrows } from "@std/assert";
 import { Dimensions, Quantity, QuantityError } from "../mod.ts";
 
-const ONE_MASS_DIMENSION = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0, 0]);
-const ONE_LENGTH_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0, 0]);
-const ONE_TEMP_DIMENSION = new Dimensions([0, 0, 0, 1, 0, 0, 0, 0, 0]);
-const TWO_LENGTH_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0, 0]);
-const THREE_LENGTH_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0, 0]);
+const ONE_MASS_DIMENSION = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]);
+const ONE_LENGTH_DIMENSION = new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]);
+const ONE_TEMP_DIMENSION = new Dimensions([0, 0, 0, 1, 0, 0, 0, 0]);
+const TWO_LENGTH_DIMENSIONS = new Dimensions([0, 2, 0, 0, 0, 0, 0, 0]);
+const THREE_LENGTH_DIMENSIONS = new Dimensions([0, 3, 0, 0, 0, 0, 0, 0]);
 /** Force is mass*length/time^2 */
-const FORCE_DIMENSIONS = new Dimensions([1, 1, -2, 0, 0, 0, 0, 0, 0]);
+const FORCE_DIMENSIONS = new Dimensions([1, 1, -2, 0, 0, 0, 0, 0]);
 
 Deno.test("Quantity instance equality", async (t) => {
     /**
@@ -53,31 +53,31 @@ Deno.test("Quantity instance equality", async (t) => {
     await check(
         "Different dimensions, same magnitude",
         // This one will equal itself:
-        () => new Quantity(15, { dimensions: new Dimensions([1, 0, 0, 0, 0, 0, 0, 0, 0]) }),
+        () => new Quantity(15, { dimensions: new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]) }),
         // But the one above won't equal this one, with different dimensions:
-        () => new Quantity(15, { dimensions: new Dimensions([0, 1, 0, 0, 0, 0, 0, 0, 0]) }),
+        () => new Quantity(15, { dimensions: new Dimensions([0, 1, 0, 0, 0, 0, 0, 0]) }),
     );
     await check(
         "Different dimensions, same magnitude (2)",
-        () => new Quantity(0, { dimensions: new Dimensions([1, 0, 0, 0, 0, 0, 0, 0, 0]) }),
-        () => new Quantity(0, { dimensions: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0]) }),
+        () => new Quantity(0, { dimensions: new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]) }),
+        () => new Quantity(0, { dimensions: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0]) }),
     );
     await check(
         "Different dimensions, same magnitude (3)",
-        () => new Quantity(-10, { dimensions: new Dimensions([1, 0, 0, 1, 2, 0, 0, 0, 0]) }),
-        () => new Quantity(-10, { dimensions: new Dimensions([1, 0, 0, 1, 1, 0, 0, 0, 0]) }),
+        () => new Quantity(-10, { dimensions: new Dimensions([1, 0, 0, 1, 2, 0, 0, 0]) }),
+        () => new Quantity(-10, { dimensions: new Dimensions([1, 0, 0, 1, 1, 0, 0, 0]) }),
     );
     await check(
         "Different custom dimensions, same magnitude and regular dimensions",
         () =>
             new Quantity(-10, {
                 // deno-fmt-ignore
-                dimensions: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1], ["a", "b", "c", "d"]),
+                dimensions: new Dimensions([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1], ["a", "b", "c", "d"]),
             }),
         () =>
             new Quantity(-10, {
                 dimensions: new Dimensions(
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     ["a", "b", "c", "d"],
                 ),
             }),
@@ -87,14 +87,14 @@ Deno.test("Quantity instance equality", async (t) => {
         () =>
             new Quantity(-10, {
                 dimensions: new Dimensions(
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2],
                     ["a", "b", "c", "d"],
                 ),
             }),
         () =>
             new Quantity(-10, {
                 dimensions: new Dimensions(
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2],
                     ["a", "b", "c", "elf"],
                 ),
             }),
@@ -261,6 +261,7 @@ Deno.test("Multiplying quantities", async (t) => {
         const z = x.multiply(y);
         assertEquals(z.magnitude, 15);
         assertEquals(z.dimensions, TWO_LENGTH_DIMENSIONS); // m²
+        assertEquals(z.toString(), "15 m^2");
     });
     await t.step(`(50 %) * (50 %)`, () => {
         const x = new Quantity(50, { units: "%" });
@@ -271,6 +272,12 @@ Deno.test("Multiplying quantities", async (t) => {
     await t.step(`(50 %) * (400 g)`, () => {
         const x = new Quantity(50, { units: "%" });
         const y = new Quantity(400, { units: "g" });
+        const z = x.multiply(y);
+        assertEquals(z.toString(), "200 g");
+    });
+    await t.step(`(400 g) * (50 %)`, () => {
+        const x = new Quantity(400, { units: "g" });
+        const y = new Quantity(50, { units: "%" });
         const z = x.multiply(y);
         assertEquals(z.toString(), "200 g");
     });

@@ -6,7 +6,40 @@ Based on [PQM](https://github.com/GhostWrench/pqm), with extensive changes.
 
 MIT licensed.
 
-Zero dependencies.
+## Features
+
+- Zero dependencies.
+- Only 4.5 KiB minified and gzipped.
+- Basic math operations: multiply, add, subtract, etc.
+- Supports tolerance values like "2±0.2 cm", and carries them through mathematical operations.
+- "Remembers" the units you input and uses them by default for output.
+- Metric prefixes for all SI units (e.g. km, MHz, μN)
+- Binary prefixes for all information units (e.g. kib, kiB, MiB)
+- Custom dimensions ("2 foo" times "6 bar" = "12 foo⋅bar") can be defined on the fly
+- Temperature units: K (Kelvins), degC (Celcius measurement), deltaC (Celcius difference), degF (Fahrenheit measurement)
+- Supports "%" (percent) as a unit (50% of 50% is 25%, not "0.25 % %"; 50% of 400g is 200g, not "20000 g %")
+- Faster than any comparable libraries for its feature set (you can run [the benchmark](./tests/benchmark.bench.ts)
+  yourself with `deno bench`):
+  - Quantity conversions:
+    - 1.1x faster than `PQM`
+    - 1.6x faster than `mathjs`
+    - 2.1x faster than `unitmath`
+    - 3.0x faster than `js-quantities`
+  - Custom dimensions
+    - 1.2x faster than `mathjs`
+    - 1.9x faster than `unitmath`
+    - `PQM` and `js-quantities` don't support custom dimensions
+
+## Missing Features
+
+- Some mathematical operations (e.g. division, sqrt) are not implemented yet because I didn't need them yet - feel free
+  to add them.
+- Some units are not supported because I didn't need them yet - feel free to add them (e.g. radiation, luminosity, tsp,
+  oz).
+- Array/vector operations (do math with many similar unit values efficiently) are not supported.
+- Handling of "significant figures" is only partially implemented and needs improvement.
+- This library generally tries _not_ to support units that can be considered deprecated (like "bar", "dram", "furlong",
+  "league", "poise", etc.) or that are ambiguous (like "ton", "gallon", etc.).
 
 ## Installation
 
@@ -30,20 +63,24 @@ Zero dependencies.
 Importing:
 
 ```ts
-import { Quantity } from "@bradenmacdonald/quantity-math-js";
+import { Q, Quantity } from "@bradenmacdonald/quantity-math-js";
 ```
 
 Constructing a quantity value:
 
 ```ts
 new Quantity(10, { units: "cm" });
+// or
+Q`10 cm`;
+// or
+Q("10 cm");
 ```
 
 Adding two quantities:
 
 ```ts
-const x = new Quantity(5, { units: "m" });
-const y = new Quantity(20, { units: "cm" });
+const x = Q`5 m`;
+const y = Q`20 cm`;
 const z = x.add(y);
 z.toString(); // "5.2 m"
 ```
@@ -51,8 +88,8 @@ z.toString(); // "5.2 m"
 Multiplying two quantities:
 
 ```ts
-const x = new Quantity(5, { units: "kg" });
-const y = new Quantity(2, { units: "m" });
+const x = Q`5 kg`;
+const y = Q`2 m`;
 const z = x.multiply(y);
 z.toString(); // "10 kg⋅m"
 ```
@@ -64,37 +101,19 @@ const x = new Quantity(5, { units: "lb" });
 x.get(); // { magnitude: 5, units: "lb" }
 ```
 
-Serialize to simple object, using specified units:
+Convert a quantity to the specified units:
 
 ```ts
-const x = new Quantity(10, { units: "cm" });
-x.getWithUnits("in"); // { magnitude: 3.9370078740157486, units: "in" }
+const x = Q`10 cm`;
+x.convert("in").get(); // { magnitude: 3.9370078740157486, units: "in" }
+x.convert("mm").toString(); // "100 mm"
 ```
 
 Simplify units:
 
 ```ts
 const x = new Quantity(5, { units: "kg^2⋅m^2⋅s^-4⋅A^-2" });
-x.getSI(); // { magnitude: 5, units: "kg/F" }
-```
-
-## Syntactic Sugar
-
-If you prefer, there is a much more compact way to initialize `Quantity` instances: using the `Q` template helper. This
-is slightly less efficient, but far more readable and convenient in many cases.
-
-```ts
-import { Q } from "@bradenmacdonald/quantity-math-js";
-
-const force = Q`34.2 kg m/s^2`; // Shorter version of: new Quantity(34.2, {units: "kg m/s^2"})
-force.getSI(); // { magnitude: 34.2, units: "N" }
-force.multiply(Q`2 s^2`).toString(); // "68.4 kg⋅m"
-```
-
-You can also call it as a function, which acts like "parse quantity string":
-
-```ts
-const force = Q("34.2 kg m/s^2"); // new Quantity(34.2, {units: "kg m/s^2"})
+x.toSI().toString(); // "5 kg/F"
 ```
 
 ## Error/uncertainty/tolerance
@@ -123,19 +142,6 @@ const fb = f.multiply(b);
 fb.toString(); // "20 _foo⋅_bar"
 fb.multiply(f).toString(); // "200 _foo^2⋅_bar"
 ```
-
-## Development Roadmap / TODOs
-
-- Finish implementing "significant digits"
-- Implement more mathematical operations like division and exponentiation.
-- Add support for angular units, including converting radians to degrees and treating "angle" as a dimension, to avoid
-  ambiguities with units like "rpm" and "Hz".
-- Consider adding support for additional units (radiation, angles, more non-SI units).
-
-## Non-features / Non-goals
-
-This library generally tries _not_ to support units that can be considered deprecated (like "bar", "dram", "furlong",
-"league", "poise", etc.) or that are ambiguous (like "ton", "gallon", etc.).
 
 ## Running tests
 
