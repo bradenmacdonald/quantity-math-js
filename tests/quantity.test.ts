@@ -1,4 +1,12 @@
-import { assert, assertEquals, assertFalse, assertNotEquals, assertThrows } from "@std/assert";
+import {
+    assert,
+    assertEquals,
+    assertFalse,
+    assertGreaterOrEqual,
+    assertLessOrEqual,
+    assertNotEquals,
+    assertThrows,
+} from "@std/assert";
 import { Dimensions, Quantity, QuantityError } from "../mod.ts";
 
 const ONE_MASS_DIMENSION = new Dimensions([1, 0, 0, 0, 0, 0, 0, 0]);
@@ -388,16 +396,61 @@ Deno.test("Uncertainty/tolerance", async (t) => {
         assertEquals(z.toString(), "3.5±0.8 cm");
     });
 
-    await t.step(`when multiplying two quantities, the relative error is added.`, () => {
+    await t.step(`when multiplying two quantities, the resulting error is computed.`, () => {
         // x = (4.52 ± 0.02) cm, y = (2.0 ± 0.2) cm.
-        // Then z = xy = 9.04 ± 0.944 cm² which rounds to 9.0 ± 0.9 cm²
         const x = new Quantity(4.52, { units: "cm", plusMinus: 0.02 });
         const y = new Quantity(2.0, { units: "cm", plusMinus: 0.2 });
         const z = x.multiply(y);
         // The results are always stored with full precision:
         assertEquals(z.magnitude, 9.04e-4); // in m
-        assertEquals(z.plusMinus, 0.944e-4);
+        assertEquals(z.plusMinus, 9.479999999999981e-5);
         // But toString() will round them by default, using the plusMinus value:
         assertEquals(z.toString(), "9.0±0.9 cm^2");
+
+        // Check this result, by assuming the error is the max error:
+        const xMaxError = new Quantity(4.52 + 0.02, { units: "cm" });
+        const yMaxError = new Quantity(2.0 + 0.2, { units: "cm" });
+        const zMaxError = xMaxError.multiply(yMaxError);
+        assertEquals(zMaxError.magnitude, z.magnitude + z.plusMinus!);
+        // And check this result, by assuming the error is the min error:
+        const xMinError = new Quantity(4.52 - 0.02, { units: "cm" });
+        const yMinError = new Quantity(2.0 - 0.2, { units: "cm" });
+        const zMinError = xMinError.multiply(yMinError);
+        assertGreaterOrEqual(zMinError.magnitude, z.magnitude - z.plusMinus!);
     });
+
+    for (
+        const [x, y] of [
+            [
+                new Quantity(-5, { units: "kg", plusMinus: 0.3 }),
+                new Quantity(10, { units: "kg", plusMinus: undefined }),
+            ],
+            [
+                new Quantity(0.4, { units: "mg", plusMinus: undefined }),
+                new Quantity(1, { units: "g", plusMinus: 0.02 }),
+            ],
+            [
+                new Quantity(100, { units: "m", plusMinus: 0.3 }),
+                new Quantity(2000, { units: "km", plusMinus: 5 }),
+            ],
+            [
+                new Quantity(-10, { units: "s", plusMinus: 0.3 }),
+                new Quantity(2000, { units: "ms", plusMinus: 5 }),
+            ],
+        ]
+    ) {
+        await t.step(`multiplying ${x} by ${y}, the resulting error is computed correctly`, () => {
+            const z = x.multiply(y);
+            // Check the result, by assuming the error is the max error:
+            const xMaxError = new Quantity(x.magnitude + (x.plusMinus ?? 0), { dimensions: x.dimensions });
+            const yMaxError = new Quantity(y.magnitude + (y.plusMinus ?? 0), { dimensions: y.dimensions });
+            const zMaxError = xMaxError.multiply(yMaxError);
+            assertLessOrEqual(zMaxError.magnitude, z.magnitude + (z.plusMinus ?? 0));
+            // Check the result, by assuming the error is the max error:
+            const xMinError = new Quantity(x.magnitude - (x.plusMinus ?? 0), { dimensions: x.dimensions });
+            const yMinError = new Quantity(y.magnitude - (y.plusMinus ?? 0), { dimensions: y.dimensions });
+            const zMinError = xMinError.multiply(yMinError);
+            assertGreaterOrEqual(zMinError.magnitude, z.magnitude - (z.plusMinus ?? 0));
+        });
+    }
 });

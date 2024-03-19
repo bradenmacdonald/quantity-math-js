@@ -515,9 +515,16 @@ export class Quantity {
             }
         } else {
             if (y._plusMinus) {
-                // When both values have error/tolerance/uncertainty, we need to add the *relative* values:
-                this._plusMinus = ((this._plusMinus / this._magnitude) + (y._plusMinus / y._magnitude)) *
-                    (this._magnitude * y._magnitude);
+                // Figure out the maximum error that is possible in the product, and use that as the new
+                // plusMinus value. (Note: _adding_ the error gives a greater error than subtracting.)
+                this._plusMinus =
+                    (Math.abs(this._magnitude) + this._plusMinus) * (Math.abs(y._magnitude) + y._plusMinus) -
+                    Math.abs(this._magnitude * y._magnitude);
+                // Note that the textbook calculation for multiplying values with uncertainty is to convert
+                // the error to a relative error (percentage), then add the relative errors together.
+                // However, while this is a good approximation it is not as accurate as the method we're
+                // using above; the error margin it calculates is sometimes smaller than the actual error
+                // margin that's possible in the product.
             } else {
                 // this has error/tolerance/uncertainty, but the other value does not.
                 this._plusMinus *= y._magnitude;
