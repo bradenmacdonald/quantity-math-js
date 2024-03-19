@@ -44,7 +44,7 @@ MIT licensed.
 ## Installation
 
 - Deno: `deno add @bradenmacdonald/quantity-math-js`
-- Deno (no install): `import { Quantity } from "jsr:@bradenmacdonald/quantity-math-js@1.2.0";`
+- Deno (no install): `import { Quantity } from "jsr:@bradenmacdonald/quantity-math-js@1.2.1";`
 - NPM: `npx jsr add @bradenmacdonald/quantity-math-js`
 - Yarn: `yarn dlx jsr add @bradenmacdonald/quantity-math-js`
 - pnpm: `pnpm dlx jsr add @bradenmacdonald/quantity-math-js`
@@ -52,9 +52,9 @@ MIT licensed.
 - Browser:
   ```html
   <script type="module">
-    import { Quantity } from "https://esm.sh/jsr/@bradenmacdonald/quantity-math-js@1.2.0";
+    import { Quantity } from "https://esm.sh/jsr/@bradenmacdonald/quantity-math-js@1.2.1";
     // Or:
-    const { Quantity } = await import('https://esm.sh/jsr/@bradenmacdonald/quantity-math-js@1.2.0');
+    const { Quantity } = await import('https://esm.sh/jsr/@bradenmacdonald/quantity-math-js@1.2.1');
   </script>
   ```
 
