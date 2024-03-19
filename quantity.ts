@@ -91,8 +91,14 @@ export class Quantity {
             [applyOffset]?: (offset: number) => void;
         } = {},
     ) {
+        if (!isFinite(this._magnitude)) throw new QuantityError("Invalid magnitude value");
         this.significantFigures = options.significantFigures;
-        this._plusMinus = options.plusMinus;
+        if (options.plusMinus !== undefined) {
+            if (!isFinite(options.plusMinus) || options.plusMinus < 0) {
+                throw new QuantityError("Invalid plusMinus value");
+            }
+            this._plusMinus = options.plusMinus;
+        }
         if (options.units) {
             if (options.dimensions) {
                 throw new QuantityError(`You can specify units or dimensions, but not both.`);

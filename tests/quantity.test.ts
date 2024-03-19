@@ -141,6 +141,18 @@ Deno.test("Constructing Quantity instances with units", async (t) => {
         assertEquals(q.magnitude, 293.15);
         assertEquals(q.dimensions, ONE_TEMP_DIMENSION);
     });
+
+    for (const invalid of [NaN, Infinity, -Infinity]) {
+        await t.step(`a Quantity will not accept ${invalid} as a value`, () => {
+            assertThrows(
+                () => {
+                    new Quantity(invalid, { units: "m" });
+                },
+                QuantityError,
+                "Invalid magnitude value",
+            );
+        });
+    }
 });
 
 Deno.test("Sorting/comparing quantities", () => {
@@ -322,6 +334,18 @@ Deno.test("Uncertainty/tolerance", async (t) => {
         assertEquals(x.plusMinus, 0.02);
         assertEquals(x.toString(), "5±0.02 m");
     });
+
+    for (const invalid of [-5, NaN, Infinity]) {
+        await t.step(`a Quantity will not accept ${invalid} as a uncertainty/tolerance value`, () => {
+            assertThrows(
+                () => {
+                    new Quantity(5, { units: "m", plusMinus: invalid });
+                },
+                QuantityError,
+                "Invalid plusMinus value",
+            );
+        });
+    }
 
     await t.step(
         `uncertainty/tolerance is stored with full precision but toString() will print it to 1 sig fig unless it starts with '1' in which case two sig figs.`,
